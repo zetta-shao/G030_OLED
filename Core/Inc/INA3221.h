@@ -156,7 +156,7 @@ typedef union {
 // (0,1,2) always 0, so real minimal resolution is 5*8=40uV. so i added it 8 times, and divided by 2,
 // got minimal resolution = 40 / (8/2) = 10uV. minimal current resolution is 10uV / 100mOhm = 0.0001(A)=0.1mA
 
-#define AvgVal
+#define INA3221_AVGVAL 1
 #define VolTabNum 16
 #define CurTabNum 2
 #define ScaleShift 1 // div by 2
@@ -170,7 +170,7 @@ typedef struct tAvgVal {
 } AvgVal_t;
 
 typedef struct t_INA3221 {
-	sw_i2c_t	*_i2c;
+	sw_i2c_t	*pDev;
 	uint16_t	_i2c_addr;
     // Value of Mask/Enable register.
 	masken_reg_t 	_masken_reg; //uint16_t
@@ -181,7 +181,7 @@ typedef struct t_INA3221 {
 	int32_t		voltage[3];
 	int32_t		curcuit[3];
 	int32_t		power[3];
-#if 0
+#ifdef INA3221_AVGVAL
 	AvgVal_t		avg[3];
 #endif
 } INA3221_t;
@@ -347,7 +347,7 @@ typedef struct t_INA3221 {
 #define ina3221_getVol_mV ina3221_getVol_Raw
 
 	int16_t ina3221_getCur_mA(struct t_INA3221 *d, uint8_t channel);
-#if 0
+#if INA3221_AVGVAL
 	int32_t ina3221_getAvgVol(struct t_INA3221 *d, uint8_t channel); //mV
 	int32_t ina3221_getAvgCur(struct t_INA3221 *d, uint8_t channel);
 #endif

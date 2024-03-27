@@ -32,20 +32,20 @@
 #define swapwordp(a) ({ uint16_t __t=(*a)>>8; (*a)<<=8; (*a)|=__t; })
 
 void ina3221_read(struct t_INA3221 *d, uint16_t reg, uint16_t *val) {
-    //_i2c->beginTransmission(_i2c_addr);
-    //_i2c->write(reg);  // Register
-    //_i2c->endTransmission(false);
-    //_i2c->requestFrom((uint8_t)_i2c_addr, (uint8_t)2);
-    //if (_i2c->available()) { *val = ((_i2c->read() << 8) | _i2c->read()); }
-	if(d->_i2c == NULL) return;
-    SW_I2C_Read_8addr(d->_i2c, d->_i2c_addr, reg, (uint8_t*)val, 2);
+    //pDev->beginTransmission(_i2c_addr);
+    //pDev->write(reg);  // Register
+    //pDev->endTransmission(false);
+    //pDev->requestFrom((uint8_t)_i2c_addr, (uint8_t)2);
+    //if (pDev->available()) { *val = ((pDev->read() << 8) | pDev->read()); }
+	if(d->pDev == NULL) return;
+    SW_I2C_Read_8addr(d->pDev, d->_i2c_addr, reg, (uint8_t*)val, 2);
     swapwordp(val);
 }
 
 uint16_t ina3221_read16(struct t_INA3221 *d, uint16_t reg) {
 	uint16_t val;
-	if(d->_i2c == NULL) return 65535;
-	SW_I2C_Read_8addr(d->_i2c, d->_i2c_addr, reg, (uint8_t*)&val, 2);
+	if(d->pDev == NULL) return 65535;
+	SW_I2C_Read_8addr(d->pDev, d->_i2c_addr, reg, (uint8_t*)&val, 2);
 	swapwordp(&val);
 	return val;
 }
@@ -56,21 +56,21 @@ void ina3221_write(struct t_INA3221 *d, uint16_t reg, uint16_t *val) {
     //_i2c->write((*val >> 8) & 0xFF);  // Upper 8-bits
     //_i2c->write(*val & 0xFF);         // Lower 8-bits
     //_i2c->endTransmission();
-	if(d->_i2c == NULL) return;
+	if(d->pDev == NULL) return;
 	swapwordp(val);
-    SW_I2C_Write_8addr(d->_i2c, d->_i2c_addr, reg, (uint8_t*)val, 2);
+    SW_I2C_Write_8addr(d->pDev, d->_i2c_addr, reg, (uint8_t*)val, 2);
 }
 
 void ina3221_write16(struct t_INA3221 *d, uint16_t reg, uint16_t val) {
-	if(d->_i2c == NULL) return;
+	if(d->pDev == NULL) return;
 	swapwordp(&val);
-    SW_I2C_Write_8addr(d->_i2c, d->_i2c_addr, reg, (uint8_t*)&val, 2);
+    SW_I2C_Write_8addr(d->pDev, d->_i2c_addr, reg, (uint8_t*)&val, 2);
 }
 
 //void HAL_Delay(uint32_t Delay); //stm32 api
 uint8_t ina3221_begin(struct t_INA3221 *d, struct sw_i2c_s *pvDev) {
 	if(d==NULL || pvDev==NULL) return 255;
-	d->_i2c = pvDev;
+	d->pDev = pvDev;
 	if(d->_i2c_addr == 0) d->_i2c_addr = default_i2caddr;
 	d->_shuntRes[0] = 100; //100 mean 100mOhm.
 	d->_shuntRes[1] = 100;
@@ -80,10 +80,10 @@ uint8_t ina3221_begin(struct t_INA3221 *d, struct sw_i2c_s *pvDev) {
 	d->_filterRes[2] = 0;
 	ina3221_write16(d, INA3221_REG_CONF, 0x8000); //reset
 	//HAL_Delay(10);
-	d->_i2c->hal_delay_ms(10);
+	d->pDev->hal_delay_ms(10);
 	ina3221_write16(d, INA3221_REG_CONF, 0x7127); //to default
 	//HAL_Delay(2);
-	if(ina3221_getDieID(d) == 0x3220) { d->_i2c = NULL; return 0; }
+	if(ina3221_getDieID(d) == 0x3220) { d->pDev = NULL; return 0; }
 	else return 2;
 }
 
@@ -433,7 +433,7 @@ float ina3221_getCurrent(struct t_INA3221 *d, uint8_t channel) { //by A
 //mV, low-3bit always 0
 int16_t ina3221_getVol_Raw(struct t_INA3221 *d, uint8_t channel) { //mV, low-3bit always 0
 	int16_t v = 32767;
-	if(d->_i2c == NULL) return -1;
+	if(d->pDev == NULL) return -1;
     switch (channel) { //just get, no shift.
 	case INA3221_CH1: ina3221_read(d, INA3221_REG_CH1_BUSV, (uint16_t*)&v); break;
 	case INA3221_CH2: ina3221_read(d, INA3221_REG_CH2_BUSV, (uint16_t*)&v); break;
@@ -473,7 +473,7 @@ float ina3221_getCurrentCompensated(struct t_INA3221 *d, uint8_t channel) {
 
 int16_t ina3221_getCur_mA(struct t_INA3221 *d, uint8_t channel) {
 	int16_t val;
-	if(d->_i2c == NULL) return -1;
+	if(d->pDev == NULL) return -1;
 	//switch (channel) {
 	//	case INA3221_CH1: ina3221_read(d, INA3221_REG_CH1_SHUNTV, (uint16_t*)&val); break;
 	//	case INA3221_CH2: ina3221_read(d, INA3221_REG_CH2_SHUNTV, (uint16_t*)&val); break;
@@ -485,11 +485,11 @@ int16_t ina3221_getCur_mA(struct t_INA3221 *d, uint8_t channel) {
 	val /= d->_shuntRes[channel];
 	return val;
 }
-#if 0
+#if INA3221_AVGVAL
 int32_t ina3221_getAvgVol(struct t_INA3221 *d, uint8_t channel) {
 	struct tAvgVal *t;
 	int16_t wVol;
-	if(!d || channel > 3 || channel < 1) return 0;
+	if(!d || !d->pDev || channel > 3 || channel < 1) return 0;
 	wVol = ina3221_getVol_Raw(d, channel) >> 3;
 	t = &(d->avg[channel  -1]);
 	t->VolAvg -= (int32_t)t->VolTab[t->vidx];
@@ -503,7 +503,7 @@ int32_t ina3221_getAvgVol(struct t_INA3221 *d, uint8_t channel) {
 int32_t ina3221_getAvgCur(struct t_INA3221 *d, uint8_t channel) {
 	struct tAvgVal *t;
 	int16_t wCur;
-	if(!d || channel > 3 || channel < 1) return 0;
+	if(!d || !d->pDev || channel > 3 || channel < 1) return 0;
 	//when shunt-res=0.04ohm, wCur=ina3221_getShuntVolRaw*5/40=ina3221_getShuntVolRaw/8
 	wCur = ina3221_getShuntVolRaw(d, channel) >> 3;
 	t = &(d->avg[channel  -1]);
@@ -516,7 +516,7 @@ int32_t ina3221_getAvgCur(struct t_INA3221 *d, uint8_t channel) {
 }
 #endif
 int32_t ina3221_getCurPower(struct t_INA3221 *d, uint8_t channel) { //mW
-	if(d->_i2c == NULL) return -1;
+	if(d->pDev == NULL) return -1;
 	d->voltage[channel] = ina3221_getVol_Raw(d, channel);
 	d->curcuit[channel] = ina3221_getCur_mA(d, channel);
 	d->power[channel] = (d->voltage[channel] * d->curcuit[channel]) / 1000;

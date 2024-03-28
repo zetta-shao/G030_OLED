@@ -84,8 +84,8 @@ uint8_t ina3221_begin(struct t_INA3221 *d, struct tag_swi2c *pvDev) {
 	STM32_DELAY_MS(10);
 	ina3221_write16(d, INA3221_REG_CONF, 0x7127); //to default
 	//HAL_Delay(2);
-	if(ina3221_getDieID(d) == 0x3220) { d->pDev = NULL; return 0; }
-	else return 2;
+	if(ina3221_getDieID(d) != 0x3220) { d->pDev = NULL; return 2; }
+	else return 0;
 }
 
 void ina3221_setShuntRes(struct t_INA3221 *d, uint32_t res_ch1, uint32_t res_ch2,

@@ -77,8 +77,8 @@ static int sw_i2c_port_initial(struct tag_swi2c *pIIC) {
 }
 static int sw_i2c_port_io_ctl(uint8_t opt, void *param) {
     int ret = 0;
-    struct tag_swi2c *d=(struct tag_swi2c*)param;
-    switch (opt)
+    swi2c_t *d=(swi2c_t*)param;
+    switch(opt)
     {
     case HAL_IO_OPT_SET_SDA_HIGH: GPIOset_stm32(&d->SDA, 1); break;
     case HAL_IO_OPT_SET_SDA_LOW: GPIOset_stm32(&d->SDA, 0); break;

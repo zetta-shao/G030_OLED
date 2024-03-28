@@ -182,15 +182,35 @@ void update_adc(ADC_HandleTypeDef *d, SSD1306_t *led) {
 	ssd1306_UpdateScreen(led);
 }
 
+void update_devices(SSD1306_t *led) {
+	char str[64];
+
+	sprintf(str, "lcd 1:%d 2:%d 3:%d 4:%d", (LCD1601.d)?1:0, (LCD1602.d)?1:0, (LCD1603.d)?1:0, (LCD1604.d)?1:0);
+	ssd1306_SetCursor(led, 0, 16);
+	ssd1306_WriteString(led, str, Font_6x8, 1);
+	ssd1306_UpdateScreen(led);
+
+	sprintf(str, "ip2 1:%d 2:%d t:%d i:%d", (IP23651.pD)?1:0, (IP23652.pD)?1:0, (ath20.pDev)?1:0, (ina3221.pDev)?1:0);
+	ssd1306_SetCursor(led, 0, 24);
+	ssd1306_WriteString(led, str, Font_6x8, 1);
+	ssd1306_UpdateScreen(led);
+
+	sprintf(str, "sw3 1:%d 2:%d 3:%d 4:%d", (SW35181.pDev)?1:0, (SW35182.pDev)?1:0, (SW35183.pDev)?1:0, (SW35184.pDev)?1:0);
+	ssd1306_SetCursor(led, 0, 32);
+	ssd1306_WriteString(led, str, Font_6x8, 1);
+	ssd1306_UpdateScreen(led);
+
+}
+
 int main(void) {
   HAL_Init();
   GPIOinit();
-
   SW_I2C_HWinit(&si2c1, &hi2c1);
   SW_I2C_HWinit(&si2c2, &hi2c2);
   SW_I2C_SWinit(&si2c3, SI2C1P, SI2C1L, SI2C1P, SI2C1A);
   SW_I2C_SWinit(&si2c4, SI2C2P, SI2C2L, SI2C2P, SI2C2A);
   HAL_ADCEx_Calibration_Start(&hadc1);
+  HAL_Delay(50);
   lcd_Init(&LCD1601, &si2c1);
   lcd_Init(&LCD1602, &si2c2);
   lcd_Init(&LCD1603, &si2c3);
@@ -198,13 +218,13 @@ int main(void) {
   //SSD1306_gpioinit4W(&SH11061, LCD_CS_P, LCD_CS, LCD_CD_P, LCD_CD);
   SSD1306_gpioinit3W(&SH11061, LCD_CS_P, LCD_CS);
   ssd1306_Init(&SH11061, &hspi1);
-  devices |= ina3221_begin(&ina3221, &si2c4) ? 0: DEV_INA3221;
+  ina3221_begin(&ina3221, &si2c4);
   IP2365_init(&IP23651, &si2c3);
   IP2365_init(&IP23652, &si2c4);
-  devices |= sw35xx_init(&SW35181, &si2c1) ? 0: DEV_SW35181;
-  devices |= sw35xx_init(&SW35182, &si2c2) ? 0: DEV_SW35182;
-  devices |= sw35xx_init(&SW35182, &si2c3) ? 0: DEV_SW35183;
-  devices |= sw35xx_init(&SW35182, &si2c4) ? 0: DEV_SW35184;
+  sw35xx_init(&SW35181, &si2c1);
+  sw35xx_init(&SW35182, &si2c2);
+  sw35xx_init(&SW35182, &si2c3);
+  sw35xx_init(&SW35182, &si2c4);
   ath20_init(&ath20, &si2c3);
 
   lcd_put_cur(&LCD1601, 0, 0);
@@ -212,9 +232,9 @@ int main(void) {
   lcd_put_cur(&LCD1603, 0, 0);
   lcd_put_cur(&LCD1604, 0, 0);
   lcd_send_string(&LCD1601, "hwi2c1 test");
-  lcd_send_string(&LCD1602, "hwi2c2 test");
   lcd_send_string(&LCD1603, "swi2c1 test");
-  lcd_send_string(&LCD1603, "swi2c2 test");
+  lcd_send_string(&LCD1602, "hwi2c2 test");
+  lcd_send_string(&LCD1604, "swi2c2 test");
 
 #if 0
   ssd1306_SetCursor(&SH11061, 1, 0);
@@ -236,16 +256,17 @@ int main(void) {
 #endif
   HAL_TIM_Base_Start_IT(&htim14);
   init_adc(&hadc1, &SH11061);
+  update_devices(&SH11061);
   while (1) {
 	  //update_ina3221(&ina3221, &SH11061);
 	  //update_sw3518(&SW35184, &SH11061);
-	  update_ath20(&ath20, &SH11061);
+	  //update_ath20(&ath20, &SH11061);
 	  update_adc(&hadc1, &SH11061);
 	  //HAL_GPIO_WritePin(EVB_LED_P, EVB_LED, GPIO_PIN_SET);
 	  HAL_Delay(3000);
 	  //update_ina3221(&ina3221, &SH11061);
 	  //update_sw3518(&SW35184, &SH11061);
-	  update_ath20(&ath20, &SH11061);
+	  //update_ath20(&ath20, &SH11061);
 	  update_adc(&hadc1, &SH11061);
 	  //HAL_GPIO_WritePin(EVB_LED_P, EVB_LED, GPIO_PIN_RESET);
 	  HAL_Delay(3000);

@@ -25,9 +25,9 @@ uint8_t lcd_send_data(lcd1602_t *p, char data) {
 	data_h = (data&0xf0);
 	data_l = ((data <<4)&0xf0);
 	frame_data[0] = data_h | 13;
-	frame_data[1] = data_h | 8;
+	frame_data[1] = data_h | 9;
 	frame_data[2] = data_l | 13;
-	frame_data[3] = data_l | 8;
+	frame_data[3] = data_l | 9;
 	return SW_I2C_Write_0addr(p->d, LCD_ADDRESS, frame_data, 4);
 }
 
@@ -38,7 +38,7 @@ uint8_t lcd_read_data(lcd1602_t *p) {
 }
 
 void lcd_wait_ready(lcd1602_t *p) {
-	uint8_t timeout=50, buf = 0x80;
+	uint8_t timeout=200, buf = 0x80;
 	for(; timeout>=1; timeout--) {
 		SW_I2C_Read_0addr(p->d, LCD_ADDRESS, &buf, 1);
 		if((buf & 128) != 0) break;
@@ -57,41 +57,49 @@ uint8_t lcd_Init(lcd1602_t *p, struct tag_swi2c *d) {
 	uint8_t	res = 0;
 	if(!p || !d) return 1;
 	p->d = d;
-	swi2c_delay_ms(50); //HAL_Delay(100);
-	res |= lcd_send_cmd(p, 0x33);
-	swi2c_delay_ms(5);
-	//lcd_wait_ready(p);
-	res |= lcd_send_cmd(p, 0x33);
-	//lcd_wait_ready(p);
-	swi2c_delay_ms(1);
-	res |= lcd_send_cmd(p, 0x33);
-	swi2c_delay_ms(10);
-	//lcd_wait_ready(p);
-	res |= lcd_send_cmd(p, 0x32);
-	swi2c_delay_ms(10);
-	//lcd_wait_ready(p);
-	if(res != 0) { p->d = NULL; return 255; }
 
-	res |= lcd_send_cmd(p, 0x28);		//function set
-	//HAL_Delay(1);
-	swi2c_delay_ms(1);
+	//if(SW_I2C_Read_0addr(p->d, LCD_ADDRESS, &res, 1) != 0) { p->d = NULL; return 255; }
+
+	//swi2c_delay_ms(50); //HAL_Delay(100);
+	res = lcd_send_cmd(p, 0x33);
+	HAL_Delay(5);
+	//if(res != 0) { p->d = NULL; return 255; }
+	//swi2c_delay_ms(5);
+	//lcd_wait_ready(p);
+	lcd_send_cmd(p, 0x33);
+	HAL_Delay(1);
+	////lcd_wait_ready(p);
+	//swi2c_delay_ms(1);
+	lcd_send_cmd(p, 0x33);
+	HAL_Delay(10);
+	//swi2c_delay_ms(10);
+	////lcd_wait_ready(p);
+	lcd_send_cmd(p, 0x32);
+	HAL_Delay(10);
+	//swi2c_delay_ms(10);
+	//lcd_wait_ready(p);
+
+	lcd_send_cmd(p, 0x28);		//function set
+	HAL_Delay(1);
+	//swi2c_delay_ms(1);
 	//lcd_wait_ready(p);
 	//lcd_send_cmd(d, 0x08);		//Display on/off
-	res |= lcd_send_cmd(p, 0x0c);		//Display on/off
-	//HAL_Delay(1);
-	swi2c_delay_ms(1);
+	lcd_send_cmd(p, 0x0c);		//Display on/off
+	HAL_Delay(1);
+	//swi2c_delay_ms(1);
 	//lcd_wait_ready(p);
-	res |= lcd_send_cmd(p, 0x01);		//clear display
+	lcd_send_cmd(p, 0x01);		//clear display
+	HAL_Delay(5);
 	//lcd_wait_ready(p);
-	swi2c_delay_ms(5);
-	res |= lcd_send_cmd(p, 0x06);		//Enter mode
-	//HAL_Delay(1);
-	//lcd_wait_ready(p);
-	swi2c_delay_ms(1);
-	res |= lcd_send_cmd(p, 0x0C);		//Display on/off
-	//HAL_Delay(1);
-	//lcd_wait_ready(p);
-	swi2c_delay_ms(1);
+	//swi2c_delay_ms(5);
+	lcd_send_cmd(p, 0x06);		//Enter mode
+	HAL_Delay(1);
+	////lcd_wait_ready(p);
+	//swi2c_delay_ms(1);
+	lcd_send_cmd(p, 0x0C);		//Display on/off
+	HAL_Delay(1);
+	////lcd_wait_ready(p);
+	//swi2c_delay_ms(1);
 	return res;
 }
 

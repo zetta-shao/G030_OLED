@@ -170,7 +170,7 @@ typedef struct tAvgVal {
 } AvgVal_t;
 
 typedef struct t_INA3221 {
-	sw_i2c_t	*pDev;
+	swi2c_t	*pDev;
 	uint16_t	_i2c_addr;
     // Value of Mask/Enable register.
 	masken_reg_t 	_masken_reg; //uint16_t
@@ -193,7 +193,7 @@ typedef struct t_INA3221 {
 	void ina3221_write(struct t_INA3221 *d, uint16_t reg, uint16_t *val);
 
 	// Initializes INA3221
-	uint8_t ina3221_begin(struct t_INA3221 *d, struct sw_i2c_s *pvDev);
+	uint8_t ina3221_begin(struct t_INA3221 *d, struct tag_swi2c *pvDev);
 
 	// Sets shunt resistor value in mOhm
 	void ina3221_setShuntRes(struct t_INA3221 *d, uint32_t res_ch1, uint32_t res_ch2, uint32_t res_ch3);

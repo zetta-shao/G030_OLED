@@ -293,7 +293,7 @@ uint8_t sw35xx_lock_i2c(struct t_sw35xx *d) {
 	return sw35xx_writereg8(d, SW35XX_I2C_ENABLE, 0);
 }
 
-uint8_t sw35xx_init(struct t_sw35xx *d, sw_i2c_t *pDev) {
+uint8_t sw35xx_init(struct t_sw35xx *d, swi2c_t *pDev) {
 	int8_t res;
 	d->pDev = pDev;
 	d->init = 0;

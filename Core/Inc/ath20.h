@@ -22,13 +22,13 @@
 //};
 
 typedef struct ath20_t {
-	struct sw_i2c_s *pDev;
+	struct tag_swi2c *pDev;
 	uint32_t		humidity;
 	uint32_t		temprature;
 } ath20t;
 
 uint8_t ath20_reset(struct ath20_t *d);
-uint8_t ath20_init(struct ath20_t *p, struct sw_i2c_s *d);
+uint8_t ath20_init(struct ath20_t *p, struct tag_swi2c *d);
 uint8_t ath20_wait_ready(struct ath20_t *d);
 uint8_t ath20_start(struct ath20_t *d);
 uint8_t ath20_readraw(struct ath20_t *d);

@@ -102,10 +102,10 @@ typedef union { //0x2b
 } reg_chg_full_t;
 
 typedef struct t_IP2365 {
-	struct	sw_i2c_s	*pD;
+	swi2c_t	*pD;
 } IP2365_t;
 
-void IP2365_init(IP2365_t *d, sw_i2c_t *pDev);
+void IP2365_init(IP2365_t *d, swi2c_t *pDev);
 uint8_t readReg(IP2365_t *d, uint8_t reg);
 void readRegP(IP2365_t *d, uint8_t reg, uint8_t *val);
 void writeReg(IP2365_t *d, uint8_t reg, uint8_t val);

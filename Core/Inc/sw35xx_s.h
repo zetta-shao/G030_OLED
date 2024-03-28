@@ -47,7 +47,7 @@
 #define ADC_TEMPERATURE	6
 
 typedef struct t_sw35xx {
-	struct sw_i2c_s	*pDev;
+	struct tag_swi2c	*pDev;
 	uint16_t 		vin_mV; /*  @brief 输入电压 */
 	uint16_t 		vout_mV; /* @brief 输出电压 */
 	uint16_t 		iout_usbc_mA; /*@brief 输出电流1(type-C) */
@@ -130,6 +130,6 @@ typedef struct t_sw35xx {
   uint8_t sw35xx_writereg8(struct t_sw35xx *d, uint8_t addr, uint8_t data);
   uint8_t sw35xx_unlock_i2c(struct t_sw35xx *d);
   uint8_t sw35xx_lock_i2c(struct t_sw35xx *d);
-  uint8_t sw35xx_init(struct t_sw35xx *d, sw_i2c_t *pDev);
+  uint8_t sw35xx_init(struct t_sw35xx *d, swi2c_t *pDev);
 
 #endif

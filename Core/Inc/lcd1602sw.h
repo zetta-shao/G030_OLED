@@ -13,12 +13,12 @@ typedef union { //0x01
 } i2cpkg;
 
 typedef struct tag_lcd1602 {
-	struct sw_i2c_s *d;
+	struct tag_swi2c *d;
 } lcd1602_t;
 
 void lcd_send_string (lcd1602_t *p, char *str);
-//uint8_t lcd_Init(struct sw_i2c_s *d);
-uint8_t lcd_Init(lcd1602_t *p, struct sw_i2c_s *d);
+//uint8_t lcd_Init(struct tag_swi2c *d);
+uint8_t lcd_Init(lcd1602_t *p, struct tag_swi2c *d);
 void lcd_clear(lcd1602_t *p);
 uint8_t lcd_send_data(lcd1602_t *p, char data);
 uint8_t lcd_send_cmd(lcd1602_t *p, char cmd);

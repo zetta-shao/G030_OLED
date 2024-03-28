@@ -77,7 +77,7 @@ uint8_t ath20_reset(struct ath20_t *d) {
 	return res;
 }
 
-uint8_t ath20_init(struct ath20_t *d, struct sw_i2c_s *s) {
+uint8_t ath20_init(struct ath20_t *d, struct tag_swi2c *s) {
 	uint8_t res;
 	int32_t val = ath20_cmd_init;
 	//int32_t val = ath20_cmd_pwron;

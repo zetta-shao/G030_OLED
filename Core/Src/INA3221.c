@@ -68,7 +68,7 @@ void ina3221_write16(struct t_INA3221 *d, uint16_t reg, uint16_t val) {
 }
 
 //void HAL_Delay(uint32_t Delay); //stm32 api
-uint8_t ina3221_begin(struct t_INA3221 *d, struct sw_i2c_s *pvDev) {
+uint8_t ina3221_begin(struct t_INA3221 *d, struct tag_swi2c *pvDev) {
 	if(d==NULL || pvDev==NULL) return 255;
 	d->pDev = pvDev;
 	if(d->_i2c_addr == 0) d->_i2c_addr = default_i2caddr;
@@ -80,7 +80,8 @@ uint8_t ina3221_begin(struct t_INA3221 *d, struct sw_i2c_s *pvDev) {
 	d->_filterRes[2] = 0;
 	ina3221_write16(d, INA3221_REG_CONF, 0x8000); //reset
 	//HAL_Delay(10);
-	d->pDev->hal_delay_ms(10);
+	//d->pDev->hal_delay_ms(10);
+	STM32_DELAY_MS(10);
 	ina3221_write16(d, INA3221_REG_CONF, 0x7127); //to default
 	//HAL_Delay(2);
 	if(ina3221_getDieID(d) == 0x3220) { d->pDev = NULL; return 0; }

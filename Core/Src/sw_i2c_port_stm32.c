@@ -27,6 +27,7 @@ void swi2c_delay_us(uint32_t us) { STM32_DELAY_US(us); }
 void swi2c_delay_ms(uint32_t ms) { STM32_DELAY_MS(ms); }
 
 static int i2c_transmit_mem_t(hwi2c_t *d) {
+	//if(HAL_I2C_IsDeviceReady((I2C_HandleTypeDef *)d->hWND, (d->i2cdev_addr<<1), 2, 2) != HAL_OK) return 8;
 	if(d->devaddrsize == 0)
 		return (HAL_I2C_Master_Transmit((I2C_HandleTypeDef *)d->hWND, (d->i2cdev_addr<<1), d->data, d->datasize, 0x100) == HAL_OK) ? 0 : 1;
 	else
@@ -34,6 +35,7 @@ static int i2c_transmit_mem_t(hwi2c_t *d) {
 }
 
 static int i2c_receive_mem_t(hwi2c_t *d) {
+	//if(HAL_I2C_IsDeviceReady((I2C_HandleTypeDef *)d->hWND, (d->i2cdev_addr<<1), 2, 2) != HAL_OK) return 8;
 	if(d->devaddrsize == 0)
 		return (HAL_I2C_Master_Transmit((I2C_HandleTypeDef *)d->hWND, (d->i2cdev_addr<<1), d->data, d->datasize, 0x100) == HAL_OK) ? 0 : 1;
 	else

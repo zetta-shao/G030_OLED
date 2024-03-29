@@ -211,10 +211,10 @@ int main(void) {
   SW_I2C_SWinit(&si2c4, SI2C2P, SI2C2L, SI2C2P, SI2C2A);
   HAL_ADCEx_Calibration_Start(&hadc1);
   HAL_Delay(50);
-  lcd_Init(&LCD1601, &si2c1);
-  lcd_Init(&LCD1602, &si2c2);
-  lcd_Init(&LCD1603, &si2c3);
-  lcd_Init(&LCD1604, &si2c4);
+  lcd_init(&LCD1601, &si2c1, 0);
+  lcd_init(&LCD1602, &si2c2, 0);
+  lcd_init(&LCD1603, &si2c3, 0);
+  lcd_init(&LCD1604, &si2c4, 0);
   //SSD1306_gpioinit4W(&SH11061, LCD_CS_P, LCD_CS, LCD_CD_P, LCD_CD);
   SSD1306_gpioinit3W(&SH11061, LCD_CS_P, LCD_CS);
   ssd1306_Init(&SH11061, &hspi1);
@@ -227,14 +227,33 @@ int main(void) {
   sw35xx_init(&SW35182, &si2c4);
   ath20_init(&ath20, &si2c3);
 
-  lcd_put_cur(&LCD1601, 0, 0);
-  lcd_put_cur(&LCD1602, 0, 0);
-  lcd_put_cur(&LCD1603, 0, 0);
-  lcd_put_cur(&LCD1604, 0, 0);
-  lcd_send_string(&LCD1601, "hwi2c1 test");
-  lcd_send_string(&LCD1603, "swi2c1 test");
-  lcd_send_string(&LCD1602, "hwi2c2 test");
-  lcd_send_string(&LCD1604, "swi2c2 test");
+  {
+	  char str[64];
+
+	  lcd_put_cur(&LCD1601, 0, 0);
+	  lcd_send_string(&LCD1601, "hwi2c1 test");
+	  sprintf(str, "log %d%d%d%d", LCD1601.log[0], LCD1602.log[0], LCD1603.log[0], LCD1604.log[0]);
+	  lcd_put_cur(&LCD1601, 1, 0);
+	  lcd_send_string(&LCD1601, str);
+
+	  lcd_put_cur(&LCD1602, 0, 0);
+	  lcd_send_string(&LCD1602, "hwi2c2 test");
+	  sprintf(str, "log %d%d%d%d", LCD1601.log[1], LCD1602.log[1], LCD1603.log[1], LCD1604.log[1]);
+	  lcd_put_cur(&LCD1602, 1, 0);
+	  lcd_send_string(&LCD1602, str);
+
+	  lcd_put_cur(&LCD1603, 0, 0);
+	  lcd_send_string(&LCD1603, "swi2c1 test");
+	  sprintf(str, "log %d%d%d%d", LCD1601.log[0], LCD1602.log[0], LCD1603.log[0], LCD1604.log[0]);
+	  lcd_put_cur(&LCD1603, 1, 0);
+	  lcd_send_string(&LCD1603, str);
+
+	  lcd_put_cur(&LCD1604, 0, 0);
+	  lcd_send_string(&LCD1604, "swi2c2 test");
+	  sprintf(str, "log %d%d%d%d", LCD1601.log[1], LCD1602.log[1], LCD1603.log[1], LCD1604.log[1]);
+	  lcd_put_cur(&LCD1604, 1, 0);
+	  lcd_send_string(&LCD1604, str);
+  }
 
 #if 0
   ssd1306_SetCursor(&SH11061, 1, 0);
@@ -262,12 +281,16 @@ int main(void) {
 	  //update_sw3518(&SW35184, &SH11061);
 	  //update_ath20(&ath20, &SH11061);
 	  update_adc(&hadc1, &SH11061);
+	  lcd_set_cursor_on(&LCD1601, 1); lcd_set_cursor_on(&LCD1602, 1);
+	  lcd_set_cursor_on(&LCD1603, 1); lcd_set_cursor_on(&LCD1604, 1);
 	  //HAL_GPIO_WritePin(EVB_LED_P, EVB_LED, GPIO_PIN_SET);
 	  HAL_Delay(3000);
 	  //update_ina3221(&ina3221, &SH11061);
 	  //update_sw3518(&SW35184, &SH11061);
 	  //update_ath20(&ath20, &SH11061);
 	  update_adc(&hadc1, &SH11061);
+	  lcd_set_cursor_on(&LCD1601, 0); lcd_set_cursor_on(&LCD1602, 0);
+	  lcd_set_cursor_on(&LCD1603, 0); lcd_set_cursor_on(&LCD1604, 0);
 	  //HAL_GPIO_WritePin(EVB_LED_P, EVB_LED, GPIO_PIN_RESET);
 	  HAL_Delay(3000);
   }

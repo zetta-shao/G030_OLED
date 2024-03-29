@@ -1,5 +1,5 @@
+// clone from https://github.com/liyanboy74/soft-i2c
 #include <stdlib.h>
-
 #include "sw_i2c.h"
 
 #ifndef TRUE
@@ -82,16 +82,16 @@ static void i2c_stop_condition(swi2c_t *d) {
 }
 
 static uint8_t i2c_check_ack(swi2c_t *d) {
-    uint8_t ack;
-    int i;
-    unsigned int temp;
+    uint8_t ack=0;
+    uint8_t i;
+    //unsigned int temp;
     d->hal_io_ctl(HAL_IO_OPT_SET_SDA_INPUT, d);
     d->hal_io_ctl(HAL_IO_OPT_SET_SCL_HIGH, d);
-    ack = 0;
+    //ack = 0;
     swi2c_delay_us(SW_I2C_WAIT_TIME);
     for (i = 10; i > 0; i--) {
-        temp = !(SW_I2C_ReadVal_SDA(d) & 1);
-        if (temp) { ack = 1; break; }
+        if(SW_I2C_ReadVal_SDA(d) == 0)
+        	{ ack = 1; break; }
     }
     d->hal_io_ctl(HAL_IO_OPT_SET_SCL_LOW, d);
     d->hal_io_ctl(HAL_IO_OPT_SET_SDA_OUTPUT, d);
@@ -107,23 +107,23 @@ static void i2c_check_not_ack(swi2c_t *d) {
 }
 
 static void i2c_slave_address(swi2c_t *d, uint8_t IICID, uint8_t readwrite) {
-    int x;
+    uint8_t x;
 	uint8_t adr8 = IICID << 1;
     if (readwrite) { adr8 |= I2C_READ; }
     else { adr8 &= ~I2C_READ; }
     d->hal_io_ctl(HAL_IO_OPT_SET_SCL_LOW, d);
-    for (x = 7; x >= 0; x--) {
-        sda_out(d, adr8 & (1 << x));
+    for(x=0x80; x!=0; x>>=1) {
+    	sda_out(d, adr8 & x);
         swi2c_delay_us(SW_I2C_WAIT_TIME);
         i2c_clk_data_out(d);
     }
 }
 
 static void i2c_register_address(swi2c_t *d, uint8_t addr) {
-    int x;
+	uint8_t x;
     d->hal_io_ctl(HAL_IO_OPT_SET_SCL_LOW, d);
-    for (x = 7; x >= 0; x--) {
-        sda_out(d, addr & (1 << x));
+    for(x=0x80; x!=0; x>>=1) {
+    	sda_out(d, addr & x);
         swi2c_delay_us(SW_I2C_WAIT_TIME);
         i2c_clk_data_out(d);
     }
@@ -143,32 +143,23 @@ static void i2c_send_ack(swi2c_t *d) {
 }
 
 static void SW_I2C_Write_Data(swi2c_t *d, uint8_t data) {
-    /*int x;
-    d->hal_io_ctl(HAL_IO_OPT_SET_SCL_LOW, d);
-    for (x = 7; x >= 0; x--) {
-        sda_out(d, data & (1 << x));
-        //d->hal_delay_us(SW_I2C_WAIT_TIME);
-        swi2c_delay_us(SW_I2C_WAIT_TIME);
-        i2c_clk_data_out(d);
-    }*/
 	uint8_t idx;
 	d->hal_io_ctl(HAL_IO_OPT_SET_SCL_LOW, d);
 	for(idx=0x80; idx!=0; idx>>=1) {
-		sda_out(d, (data & idx) ? 1 : 0);
+		sda_out(d, data & idx);
         swi2c_delay_us(SW_I2C_WAIT_TIME);
         i2c_clk_data_out(d);
 	}
 }
 
 static uint8_t SW_I2C_Read_Data(swi2c_t *d) {
-    int x;
+    uint8_t x;
     uint8_t readdata = 0;
     d->hal_io_ctl(HAL_IO_OPT_SET_SDA_INPUT, d);
-    for (x = 8; x--;) {
+    for (x=0; x<8; x++) {
         d->hal_io_ctl(HAL_IO_OPT_SET_SCL_HIGH, d);
         readdata <<= 1;
-        if (SW_I2C_ReadVal_SDA(d))
-            readdata |= 0x01;
+        if (SW_I2C_ReadVal_SDA(d)) readdata |= 1;
         swi2c_delay_us(SW_I2C_WAIT_TIME);
         d->hal_io_ctl(HAL_IO_OPT_SET_SCL_LOW, d);
         swi2c_delay_us(SW_I2C_WAIT_TIME);
@@ -178,34 +169,35 @@ static uint8_t SW_I2C_Read_Data(swi2c_t *d) {
 }
 
 uint8_t SW_I2C_Read_Naddr(swi2c_t *d, uint8_t IICID, uint16_t regaddr, uint8_t addrsize, uint8_t *pdata, uint8_t rcnt) {
-    uint8_t returnack = TRUE;
+    uint8_t returnack = 0;
     uint8_t index;
 
-    if(d==NULL) return FALSE;
-    if(!rcnt) return FALSE;
+    if(d==NULL || !rcnt) return 255;
     if(!d->SCL.port) {
     	hwi2c_t t = { d->SDA.port, IICID, regaddr, addrsize, pdata, rcnt };
     	returnack = (uint8_t)d->hal_io_ctl(HAL_IO_OPT_HWI2C_READ, &t);
     } else {
     	uint8_t	*pADR = (uint8_t*)&regaddr;
     i2c_port_initial(d);
-    i2c_start_condition(d);
-    //写ID
-    i2c_slave_address(d, IICID, WRITE_CMD);
-    if (!i2c_check_ack(d)) { i2c_stop_condition(d); return 1; }
-    swi2c_delay_us(SW_I2C_WAIT_TIME);
-    for(index=addrsize; index>0; index--) {
-        i2c_register_address(d, (uint8_t)(pADR[index-1]));
-        if (!i2c_check_ack(d)) { returnack = FALSE; break; }
-        swi2c_delay_us(SW_I2C_WAIT_TIME);
-    }
 
-    if (returnack==FALSE) { i2c_stop_condition(d); return 1; }
+	i2c_start_condition(d);
+	//写ID
+	i2c_slave_address(d, IICID, WRITE_CMD);
+	if (!i2c_check_ack(d)) { i2c_stop_condition(d); return 1; }
+	swi2c_delay_us(SW_I2C_WAIT_TIME);
+	for(index=addrsize; index>0; index--) {
+		i2c_register_address(d, (uint8_t)(pADR[index-1]));
+		if (!i2c_check_ack(d)) { returnack = 2; break; }
+		swi2c_delay_us(SW_I2C_WAIT_TIME);
+	}
+
+	if (returnack!=0) { i2c_stop_condition(d); return returnack; }
+
     //重启I2C总线
     i2c_start_condition(d);
     //读ID
     i2c_slave_address(d, IICID, READ_CMD);
-    if (!i2c_check_ack(d)) { i2c_stop_condition(d); return 1; }
+    if (!i2c_check_ack(d)) { i2c_stop_condition(d); return 3; }
     //循环读数据
     if(rcnt > 1) {
         for ( index = 0 ; index < (rcnt - 1) ; index++) {
@@ -219,7 +211,7 @@ uint8_t SW_I2C_Read_Naddr(swi2c_t *d, uint8_t IICID, uint16_t regaddr, uint8_t a
     i2c_check_not_ack(d);
     i2c_stop_condition(d);
     }
-    return (returnack==FALSE)?1:0;
+    return returnack;
 }
 
 uint8_t SW_I2C_Read_8addr(swi2c_t *d, uint8_t IICID, uint8_t regaddr, uint8_t *pdata, uint8_t rcnt) {
@@ -235,10 +227,10 @@ uint8_t SW_I2C_Read_0addr(swi2c_t *d, uint8_t IICID, uint8_t *pdata, uint8_t rcn
 }
 
 uint8_t SW_I2C_Write_Naddr(swi2c_t *d, uint8_t IICID, uint16_t regaddr, uint8_t addrsize, uint8_t *pdata, uint8_t rcnt) {
-    uint8_t returnack = TRUE;
+    uint8_t returnack = 0;
     uint8_t index;
-    if(d==NULL || !rcnt) return FALSE;
-    if(! d->SCL.port) {
+    if(d==NULL || !rcnt) return 255;
+    if(d->SCL.port==NULL) {
     	hwi2c_t t = { d->SDA.port, IICID, regaddr, addrsize, pdata, rcnt };
     	returnack = (uint8_t)d->hal_io_ctl(HAL_IO_OPT_HWI2C_WRITE, &t);
     } else {
@@ -251,20 +243,20 @@ uint8_t SW_I2C_Write_Naddr(swi2c_t *d, uint8_t IICID, uint16_t regaddr, uint8_t 
 		swi2c_delay_us(SW_I2C_WAIT_TIME);
 		for(index=addrsize; index>0; index--) {
 			i2c_register_address(d, (uint8_t)(pADR[index-1]));
-			if (!i2c_check_ack(d)) { returnack = FALSE; break; }
+			if (!i2c_check_ack(d)) { returnack = 2; break; }
 			swi2c_delay_us(SW_I2C_WAIT_TIME);
 		}
 
-		if(returnack==FALSE) { i2c_stop_condition(d); return 1; }
+		if(returnack!=0) { i2c_stop_condition(d); return returnack; }
 		//写数据
 		for ( index = 0 ; index < rcnt ; index++) {
 			SW_I2C_Write_Data(d, pdata[index]);
-			if (!i2c_check_ack(d)) { returnack = FALSE; break; }
+			if (!i2c_check_ack(d)) { returnack = 3; break; }
 			swi2c_delay_us(SW_I2C_WAIT_TIME);
 		}
 		i2c_stop_condition(d);
     }
-    return (returnack==FALSE)?1:0;
+    return returnack;
 }
 
 uint8_t SW_I2C_Write_8addr(swi2c_t *d, uint8_t IICID, uint8_t regaddr, uint8_t *pdata, uint8_t rcnt) {
@@ -289,6 +281,18 @@ uint8_t SW_I2C_Check_SlaveAddr(swi2c_t *d, uint8_t IICID) {
     }
     i2c_stop_condition(d);
     return returnack;
+}
+
+void swi2c_dummy_clock(swi2c_t *d) {
+	uint8_t i;
+	if(d->SCL.port == NULL) return;	//h/w i2c
+	d->hal_io_ctl(HAL_IO_OPT_SET_SDA_INPUT, d);
+	for(i=0; i<100; i++) {
+		if(SW_I2C_ReadVal_SDA(d) != 0) break;
+		i2c_clk_data_out(d);
+		swi2c_delay_us(SW_I2C_WAIT_TIME);
+	}
+	i2c_port_initial(d);
 }
 
 //__weak void swi2c_delay_us(uint32_t time) { }

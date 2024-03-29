@@ -84,6 +84,7 @@ uint8_t ath20_init(struct ath20_t *d, struct tag_swi2c *s) {
 	if(!s||!d) return 255;
 	d->pDev = s;
 	//ath20_reset(d);
+	swi2c_dummy_clock(d->pDev);
 	res = SW_I2C_Write_0addr(d->pDev, ath20_addr, (uint8_t*)&val, 1);
 	res |= ath20_wait_ready(d);
 	if(res != 0) d->pDev = NULL;

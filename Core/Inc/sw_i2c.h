@@ -35,11 +35,12 @@ typedef enum
 
 typedef struct hwi2c_stm32 {
 	void		*hWND;
-	uint16_t	i2cdev_addr;
+	uint8_t		i2cdev_addr;
 	uint16_t	i2cmem_addr;
 	uint8_t		devaddrsize;
 	uint8_t		*data;
 	uint16_t	datasize;
+	uint8_t		unused1;
 } hwi2c_t;
 
 typedef struct tag_swi2c {
@@ -64,5 +65,5 @@ uint8_t SW_I2C_Write_16addr(swi2c_t *d, uint8_t IICID, uint16_t regaddr, uint8_t
 uint8_t SW_I2C_Check_SlaveAddr(swi2c_t *d, uint8_t IICID);
 void swi2c_delay_us(uint32_t time);
 void swi2c_delay_ms(uint32_t time);
-
+void swi2c_dummy_clock(swi2c_t *d);
 #endif  /* __I2C_SW_H */

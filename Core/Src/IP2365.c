@@ -26,6 +26,7 @@ void readRegP(IP2365_t *d, uint8_t reg, uint8_t *val) {
 void IP2365_init(IP2365_t *d, swi2c_t *pDev) {
 	uint8_t val;
 	d->pD = pDev;
+	swi2c_dummy_clock(d->pD);
 	if(SW_I2C_Read_8addr(d->pD, i2caddr, IP2365_REG_SYSCTL1, &val, 1) != 0) //getChargeEnable
 		d->pD = NULL;
 }

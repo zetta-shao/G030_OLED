@@ -72,6 +72,7 @@ uint8_t ina3221_begin(struct t_INA3221 *d, struct tag_swi2c *pvDev) {
 	if(d==NULL || pvDev==NULL) return 255;
 	d->pDev = pvDev;
 	if(d->_i2c_addr == 0) d->_i2c_addr = default_i2caddr;
+	swi2c_dummy_clock(d->pDev);
 	d->_shuntRes[0] = 100; //100 mean 100mOhm.
 	d->_shuntRes[1] = 100;
 	d->_shuntRes[2] = 100;

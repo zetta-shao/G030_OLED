@@ -297,6 +297,7 @@ uint8_t sw35xx_init(struct t_sw35xx *d, swi2c_t *pDev) {
 	int8_t res;
 	d->pDev = pDev;
 	d->init = 0;
+	swi2c_dummy_clock(d->pDev);
 	res = sw35xx_unlock_i2c(d);
 	//SW35xx_i2cWriteReg8(d, SW35XX_I2C_CTRL, 0x02);
 	res |= sw35xx_writereg8(d, SW35XX_I2C_CTRL, 0x02);

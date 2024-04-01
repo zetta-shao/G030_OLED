@@ -44,7 +44,7 @@ static int i2c_receive_mem_t(hwi2c_t *d) {
 
 static int sw_i2c_port_io_ctl(uint8_t opt, void *param);
 
-void __HAL_init__(swi2c_t *d) {
+void __HAL_init_i2c__(swi2c_t *d) {
 		d->hal_init = sw_i2c_port_initial;
 	    d->hal_io_ctl = sw_i2c_port_io_ctl;
 	    if(d->SCL.port != NULL) SW_I2C_initial(d);

@@ -10,7 +10,7 @@
 #endif
 
 swi2c_t *__4delay__ = NULL;
-void __HAL_init__(swi2c_t *d);
+void __HAL_init_i2c__(swi2c_t *d);
 
 // sw_i2c 初始化
 void SW_I2C_initial(swi2c_t *d) {
@@ -23,7 +23,7 @@ void SW_I2C_HWinit(swi2c_t *d, void *hWND) {
     if (!d || !hWND) return;
     d->SDA.port = hWND;
     d->SCL.port = NULL;
-    __HAL_init__(d);
+    __HAL_init_i2c__(d);
     __4delay__ = d;
 }
 
@@ -32,7 +32,7 @@ void SW_I2C_SWinit(swi2c_t *d, void* SCLport, uint16_t SCLpin, void* SDAport, ui
 	if(!SCLport || !SDAport) return;
 	d->SCL.port = SCLport; d->SCL.pin = SCLpin;
 	d->SDA.port = SDAport; d->SDA.pin = SDApin;
-    __HAL_init__(d);
+    __HAL_init_i2c__(d);
     __4delay__ = d;
 }
 

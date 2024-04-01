@@ -1,10 +1,10 @@
 #ifndef _ST7290_h_          
 #define _ST7290_h_
 #include <gpiodef.h>
-#include <sw_i2c.h>
+#include <swspi.h>
 
 typedef struct tag_st7920 {
-	struct tag_swi2c *pDev;
+	struct tag_swspi *pDev;
 	stm32_gpio_t	psb;
 	stm32_gpio_t	rs;
 	stm32_gpio_t	clk;

@@ -4,10 +4,10 @@
 /****************************************
 * clone from https://github.com/wumingyu12/STM32-ST7290-LCD12864-20150729/tree/master
 ****************************************/
-__weak void st7920_set_psb(st7920_t *d, uint8_t val); //always low
-__weak void st7920_set_rs(st7920_t *d, uint8_t val); //always high
-__weak void st7920_set_sclk(st7920_t *d, uint8_t val);
-__weak void st7920_set_sid(st7920_t *d, uint8_t val);
+void st7920_set_psb(st7920_t *d, uint8_t val); //always low
+void st7920_set_rs(st7920_t *d, uint8_t val); //always high
+void st7920_set_sclk(st7920_t *d, uint8_t val);
+void st7920_set_sid(st7920_t *d, uint8_t val);
 #define delay_us STM32_DELAY_US
 #define delay_ms STM32_DELAY_MS
 
@@ -34,6 +34,7 @@ void st7920_init(st7920_t *d) {
 }
 
 void st7920_serialwrite(st7920_t *d, uint8_t Dbyte) {
+#if 0
      uint8_t i;
      for(i=8;i>0;i--) {
     	 st7920_set_sid(d, (Dbyte&128)>>7);
@@ -42,6 +43,8 @@ void st7920_serialwrite(st7920_t *d, uint8_t Dbyte) {
 		 st7920_set_sclk(d, 0); //LCD_SCLK_0;
 		 Dbyte<<=1;
      }
+#endif
+     swspi_write(d->pDev, &Dbyte, 1);
 }
 void st7920_cmd(st7920_t *d, uint8_t Cbyte) {
 	st7920_set_rs(d, 1); //LCD_RS_1;

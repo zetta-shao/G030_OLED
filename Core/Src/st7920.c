@@ -1,5 +1,5 @@
 #include "gpiodef.h"
-#include "st7290.h"
+#include "st7920.h"
 
 /****************************************
 * clone from https://github.com/wumingyu12/STM32-ST7290-LCD12864-20150729/tree/master
@@ -11,9 +11,11 @@ void st7920_set_sid(st7920_t *d, uint8_t val);
 #define delay_us STM32_DELAY_US
 #define delay_ms STM32_DELAY_MS
 
-void st7920_init(st7920_t *d) {
-	st7920_set_psb(d, 0); //LCD_PSB_0; //һֱ���ͣ��ô��ڷ�ʽ���� ����ֱ�ӽӵأ�
-	st7920_set_rs(d, 1); //LCD_RS_1;  //CSһֱ���ߣ�ʹ��Һ������ֱ�ӽ�VCC��
+void st7920_init(st7920_t *d, spi_gpio_t *rs, spi_gpio_t *psb) {
+	if(rs) d->rs = *rs;
+	if(psb) d->psb = *psb;
+	if(rs) st7920_set_rs(d, 1); //LCD_RS_1;  //CSһֱ���ߣ�ʹ��Һ������ֱ�ӽ�VCC��
+	if(psb) st7920_set_psb(d, 0); //LCD_PSB_0; //һֱ���ͣ��ô��ڷ�ʽ���� ����ֱ�ӽӵأ�
 
 	st7920_cmd(d, 0x30);
 	delay_ms(10);
@@ -97,30 +99,26 @@ void st7920_fill(st7920_t *d, uint8_t color) { //�������RAM
 	st7920_cmd(d, 0x36);
 }
 
-void st7920_init_w_gpio(st7920_t *d, int gpios, stm32_gpio_t *gpioary) {
-	if(!d) return;
-	if(gpios > 3) { d->psb.port = gpioary[3].port; d->psb.pin = gpioary[3].pin; }
-	if(gpios > 2) { d->rs.port = gpioary[2].port; d->rs.pin = gpioary[2].pin; }
-	if(gpios > 1) { d->clk.port = gpioary[1].port; d->clk.pin = gpioary[1].pin; }
-	if(gpios > 0) { d->sid.port = gpioary[0].port; d->sid.pin = gpioary[0].pin;	}
-}
-
 #ifdef USE_HAL_DRIVER //for STM32
 void st7920_set_psb(st7920_t *d, uint8_t val) {
-	if(val != 0)	d->pDev->hal_io_ctl(HAL_IO_OPT_SET_GPIO_LOW, &d->psb);
-	else			d->pDev->hal_io_ctl(HAL_IO_OPT_SET_GPIO_HIGH, &d->psb);
+	if(! d->psb.port) return;
+	//if(val != 0)	d->pDev->hal_io_ctl(IOCTL_SWSPI_SET_GPIO_LOW, &d->psb);
+	//else			d->pDev->hal_io_ctl(IOCTL_SWSPI_SET_GPIO_HIGH, &d->psb);
+	swspi_setgpo(&d->psb, val);
 } //always low
 void st7920_set_rs(st7920_t *d, uint8_t val) {
-	if(val != 0)	d->pDev->hal_io_ctl(HAL_IO_OPT_SET_GPIO_LOW, &d->rs);
-	else			d->pDev->hal_io_ctl(HAL_IO_OPT_SET_GPIO_HIGH, &d->rs);
+	if(! d->rs.port) return;
+	//if(val != 0)	d->pDev->hal_io_ctl(IOCTL_SWSPI_SET_GPIO_LOW, &d->rs);
+	//else			d->pDev->hal_io_ctl(IOCTL_SWSPI_SET_GPIO_HIGH, &d->rs);
+	swspi_setgpo(&d->rs, val);
 } //always high
 void st7920_set_sclk(st7920_t *d, uint8_t val) {
-	if(val != 0)	d->pDev->hal_io_ctl(HAL_IO_OPT_SET_GPIO_LOW, &d->clk);
-	else			d->pDev->hal_io_ctl(HAL_IO_OPT_SET_GPIO_HIGH, &d->clk);
+	//if(val != 0)	d->pDev->hal_io_ctl(IOCTL_SWSPI_SET_GPIO_LOW, &d->clk);
+	//else			d->pDev->hal_io_ctl(IOCTL_SWSPI_SET_GPIO_HIGH, &d->clk);
 }
 void st7920_set_sid(st7920_t *d, uint8_t val) {
-	if(val != 0)	d->pDev->hal_io_ctl(HAL_IO_OPT_SET_GPIO_LOW, &d->sid);
-	else			d->pDev->hal_io_ctl(HAL_IO_OPT_SET_GPIO_HIGH, &d->sid);
+	//if(val != 0)	d->pDev->hal_io_ctl(IOCTL_SWSPI_SET_GPIO_LOW, &d->sid);
+	//else			d->pDev->hal_io_ctl(IOCTL_SWSPI_SET_GPIO_HIGH, &d->sid);
 }
 #else
 __weak void st7920_set_psb(st7920_t *d, uint8_t val) { } //always low

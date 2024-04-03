@@ -1,5 +1,5 @@
 #include "stdio.h"
-#include "sw_i2c.h"
+#include "swi2c.h"
 #include "gpiodef.h"
 #include "lcd1602sw.h"
 
@@ -15,11 +15,11 @@ uint8_t lcd_send_cmd(lcd1602_t *p, char cmd) {
 	frame_data[0] = data_h | 8;
 	frame_data[1] = data_h | 12;
 	frame_data[2] = data_h | 8;
-	SW_I2C_Write_0addr(p->d, p->i2c_addr, frame_data, 3);
+	swi2c_Write_0addr(p->d, p->i2c_addr, frame_data, 3);
 	frame_data[3] = data_l | 8;
 	frame_data[4] = data_l | 12;
 	frame_data[5] = data_l | 8;
-	SW_I2C_Write_0addr(p->d, p->i2c_addr, frame_data+3, 3);
+	swi2c_Write_0addr(p->d, p->i2c_addr, frame_data+3, 3);
 	return 0;
 }
 
@@ -32,11 +32,11 @@ uint8_t lcd_send_data(lcd1602_t *p, char data) {
 	frame_data[0] = data_h | 9;
 	frame_data[1] = data_h | 13;
 	frame_data[2] = data_h | 9;
-	SW_I2C_Write_0addr(p->d, p->i2c_addr, frame_data, 3);
+	swi2c_Write_0addr(p->d, p->i2c_addr, frame_data, 3);
 	frame_data[3] = data_l | 9;
 	frame_data[4] = data_l | 13;
 	frame_data[5] = data_l | 9;
-	SW_I2C_Write_0addr(p->d, p->i2c_addr, frame_data+3, 3);
+	swi2c_Write_0addr(p->d, p->i2c_addr, frame_data+3, 3);
 	return 0;
 }
 #endif
@@ -49,7 +49,7 @@ uint8_t lcd_write(lcd1602_t *p, uint8_t data, uint8_t is_data) {
 	buf[1] = dh | is_data | p->bklg;
 	buf[2] = dl | is_data | p->bklg | 4;
 	buf[3] = dl | is_data | p->bklg;
-	return SW_I2C_Write_0addr(p->d, p->i2c_addr, buf, 4);
+	return swi2c_Write_0addr(p->d, p->i2c_addr, buf, 4);
 }
 
 void lcd_clear(lcd1602_t *p) {
@@ -58,16 +58,16 @@ void lcd_clear(lcd1602_t *p) {
 	HAL_Delay(1);
 }
 
-uint8_t lcd_init(lcd1602_t *p, struct tag_swi2c *d, uint8_t i2c_addr) {
+uint8_t lcd_init(lcd1602_t *p, struct tag_swi2c *d, uint8_t i2cadr) {
 	uint8_t	res = 0;
 	if(!p || !d) return 1;
 	p->d = d;
 	p->i2c_addr = LCD_ADDRESS;
-	if(i2c_addr >= 0x20 && i2c_addr <= 0x27) p->i2c_addr=i2c_addr;
+	if(i2cadr!=0) p->i2c_addr=i2cadr;
 	p->bklg = LCD_BACKLIGHT;
-	//if(SW_I2C_Read_0addr(p->d, LCD_ADDRESS, &res, 1) != 0) { p->d = NULL; return 255; }
+	//if(swi2c_Read_0addr(p->d, LCD_ADDRESS, &res, 1) != 0) { p->d = NULL; return 255; }
 	swi2c_dummy_clock(p->d);
-	p->log[0] = SW_I2C_Read_0addr(p->d, p->i2c_addr, p->log+1, 1);
+	p->log[0] = swi2c_Read_0addr(p->d, p->i2c_addr, p->log+1, 1);
 
 	//swi2c_delay_ms(50); //HAL_Delay(100);
 	//lcd_write(p, 0x33, 0);
@@ -130,7 +130,7 @@ void lcd_put_cur(lcd1602_t *p, uint8_t row,uint8_t col) {
 
 void lcd_seti2caddr(lcd1602_t *p, uint16_t addr) { p->i2c_addr = addr; }
 
-void lcd_set_cursor_on(lcd1602_t *p, uint8_t on) {
+void lcd_set_backlight_on(lcd1602_t *p, uint8_t on) {
 	if(on != 0) {
 		p->bklg |= LCD_BACKLIGHT;
 		lcd_write(p, 0xe, 0);

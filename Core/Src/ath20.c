@@ -63,7 +63,7 @@ uint8_t ath20_wait_ready(struct ath20_t *d) {
 	if(d->pDev == NULL) return 255;
 	for(idx=0; idx<ath20_retry; idx++) {
 		HAL_Delay(ath20_wait_delay);
-		if(SW_I2C_Read_0addr(d->pDev, ath20_addr, &val, 1) != 0) return 3;
+		if(swi2c_Read_0addr(d->pDev, ath20_addr, &val, 1) != 0) return 3;
 		if((val & 128) == 0) return 0;
 	}
 	return (idx==ath20_retry)? 2 : 0;
@@ -72,7 +72,7 @@ uint8_t ath20_wait_ready(struct ath20_t *d) {
 uint8_t ath20_reset(struct ath20_t *d) {
 	uint8_t res, val = ath20_cmd_rst;
 	if(d->pDev == NULL) return 255;
-	res = SW_I2C_Write_0addr(d->pDev, ath20_addr, &val, 1);
+	res = swi2c_Write_0addr(d->pDev, ath20_addr, &val, 1);
 	res |= ath20_wait_ready(d);
 	return res;
 }
@@ -85,7 +85,7 @@ uint8_t ath20_init(struct ath20_t *d, struct tag_swi2c *s) {
 	d->pDev = s;
 	//ath20_reset(d);
 	swi2c_dummy_clock(d->pDev);
-	res = SW_I2C_Write_0addr(d->pDev, ath20_addr, (uint8_t*)&val, 1);
+	res = swi2c_Write_0addr(d->pDev, ath20_addr, (uint8_t*)&val, 1);
 	res |= ath20_wait_ready(d);
 	if(res != 0) d->pDev = NULL;
 	return res;
@@ -97,10 +97,10 @@ uint8_t ath20_start(struct ath20_t *d) { //wait for ready?
 	if(d->pDev == NULL) return 255;
 	dwT[0] = ath20_cmd_read;
 	dwT[1] = 0;
-	cmd[7] = SW_I2C_Write_0addr(d->pDev, ath20_addr, cmd, 3); //start sampling
+	cmd[7] = swi2c_Write_0addr(d->pDev, ath20_addr, cmd, 3); //start sampling
 	cmd[7] = ath20_wait_ready(d); //wait ready
 	if(cmd[7] != 0) return cmd[7];
-	cmd[7] = SW_I2C_Read_0addr(d->pDev, ath20_addr, cmd, 7);
+	cmd[7] = swi2c_Read_0addr(d->pDev, ath20_addr, cmd, 7);
 	d->humidity = (cmd[1] << 12) | (cmd[2] << 4) | (cmd[3] >> 4);
 	d->temprature = ((cmd[3] & 15) << 16) | (cmd[4] << 8) | cmd[5];
 	return 0;

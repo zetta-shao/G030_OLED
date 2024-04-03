@@ -67,39 +67,14 @@ _BEGIN_STD_C
 #endif
 
 /* ^^^ I2C config ^^^ */
-
 /* vvv SPI config vvv */
-
-#ifndef SSD1306_SPI_PORT
-#define SSD1306_SPI_PORT        hspi1
-#endif
-
-#ifndef SSD1306_CS_Port
-#define SSD1306_CS_Port         GPIOA
-#endif
-#ifndef SSD1306_CS_Pin
-#define SSD1306_CS_Pin          GPIO_PIN_8
-#endif
-
-#ifndef SSD1306_DC_Port
-#define SSD1306_DC_Port         GPIOA
-#endif
-#ifndef SSD1306_DC_Pin
-#define SSD1306_DC_Pin          GPIO_PIN_4
-#endif
-
-#ifndef SSD1306_Reset_Port
-#define SSD1306_Reset_Port      GPIOA
-#endif
-#ifndef SSD1306_Reset_Pin
-#define SSD1306_Reset_Pin       GPIO_PIN_6
-#endif
-
 /* ^^^ SPI config ^^^ */
 
 #if defined(SSD1306_USE_I2C)
+#include "swi2c.h"
 extern I2C_HandleTypeDef SSD1306_I2C_PORT;
 #elif defined(SSD1306_USE_SPI)
+#include "swspi.h"
 extern SPI_HandleTypeDef SSD1306_SPI_PORT;
 #else
 #error "You should define SSD1306_USE_SPI or SSD1306_USE_I2C macro!"
@@ -119,6 +94,8 @@ extern SPI_HandleTypeDef SSD1306_SPI_PORT;
 #define SSD1306_BUFFER_SIZE   SSD1306_WIDTH * SSD1306_HEIGHT / 8
 #endif
 
+typedef stm32_gpio_t ssd1306_gpio_t; //change for other MCU
+
 // Enumeration for screen colors
 typedef enum {
     Black = 0x00, // Black color, no pixel
@@ -135,22 +112,28 @@ typedef struct tSSD1306 {
 	uint16_t 	CurrentX;
 	uint16_t 	CurrentY;
 	uint8_t 	flag;
-	uint8_t 	DisplayOn;
+	uint8_t		i2c_addr;
+	ssd1306_gpio_t	DC;
+	ssd1306_gpio_t	CS;
+	ssd1306_gpio_t	RST;
+	//swspi_t		*pSPI;
 #if defined(SSD1306_USE_I2C)
-	struct __I2C_HandleTypeDef *pD;
+	//struct __I2C_HandleTypeDef *pDev;
+	swi2c_t		*pDev;
 #elif defined(SSD1306_USE_SPI)
-	struct __SPI_HandleTypeDef *pD;
+	//struct __SPI_HandleTypeDef *pDev;
+	swspi_t		*pDev;
 #endif
-	void*		DC_PORT;
-	void*		CS_PORT;
-	void*		RST_PORT;
-	void*		CLK_PORT;
-	void*		DATA_PORT;
-	uint16_t	dc_pin;
-	uint16_t	cs_pin;
-	uint16_t	rst_pin;
-	uint16_t	clk_pin;
-	uint16_t	dta_pin;
+	//void*		DC_PORT;
+	//void*		CS_PORT;
+	//void*		RST_PORT;
+	//void*		CLK_PORT;
+	//void*		DATA_PORT;
+	//uint16_t	dc_pin;
+	//uint16_t	cs_pin;
+	//uint16_t	rst_pin;
+	//uint16_t	clk_pin;
+	//uint16_t	dta_pin;
 	//uint16_t		rsv1;
 	uint8_t		SSD1306_Buffer[SSD1306_BUFFER_SIZE];
 } SSD1306_t;
@@ -161,6 +144,7 @@ typedef struct {
 } SSD1306_VERTEX;
 
 #define __INITED		0x01
+#define __DISPLAY_ON	0x02
 #define __OLED_3WSPI	0x80
 
 // Procedure definitions
@@ -169,14 +153,17 @@ void SSD1306_gpioSWSPI(struct tSSD1306 *d, void* SWCLKport, uint16_t SWCLKpin, v
 void SSD1306_gpioSetCS(struct tSSD1306 *d, void* CSport, uint16_t CSpin);
 void SSD1306_gpioSetDC(struct tSSD1306 *d, void* DCport, uint16_t DCpin);
 void SSD1306_gpioSetRST(struct tSSD1306 *d, void* RSTport, uint16_t RSTpin);
-void SSD1306_gpioinitSW(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin, void* RSTport, uint16_t RSTpin, void* SWCLKport, uint16_t SWCLKpin, void* SWDATAport, uint16_t SWDATApin);
+void SSD1306_gpioinitSW(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin, void* RSTport, uint16_t RSTpin);
 
-void SSD1306_gpioinit(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin, void* RSTport, uint16_t RSTpin, void* SWCLKport, uint16_t SWCLKpin, void* SWDATAport, uint16_t SWDATApin);
-void SSD1306_gpioinit5W(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin, void* RSTport, uint16_t RSTpin);
-void SSD1306_gpioinit4W(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin);
-void SSD1306_gpioinit3W(struct tSSD1306 *d, void* CSport, uint16_t CSpin);
-void ssd1306_Init(struct tSSD1306 *d, void* pvPort);
-void SH1106_Init(struct tSSD1306 *d, void* pvPort);
+//void SSD1306_gpioinit(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin, void* RSTport, uint16_t RSTpin, void* SWCLKport, uint16_t SWCLKpin, void* SWDATAport, uint16_t SWDATApin);
+//void SSD1306_gpioinit5W(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin, void* RSTport, uint16_t RSTpin);
+void SSD1306_gpioinit5W2(struct tSSD1306 *d, ssd1306_gpio_t *CS, ssd1306_gpio_t *DC, ssd1306_gpio_t *RST);
+//void SSD1306_gpioinit4W(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin);
+void SSD1306_gpioinit4W2(struct tSSD1306 *d, ssd1306_gpio_t *CS, ssd1306_gpio_t *DC);
+//void SSD1306_gpioinit3W(struct tSSD1306 *d, void* CSport, uint16_t CSpin);
+void SSD1306_gpioinit3W2(struct tSSD1306 *d, ssd1306_gpio_t *CS);
+void SSD1306_Init(struct tSSD1306 *d, void *pvport);
+void SH1106_Init(struct tSSD1306 *d, void *pvport);
 void ssd1306_Fill(struct tSSD1306 *d, SSD1306_COLOR color);
 void ssd1306_UpdateScreen(struct tSSD1306 *d);
 void ssd1306_DrawPixel(struct tSSD1306 *d, uint8_t x, uint8_t y, SSD1306_COLOR color);

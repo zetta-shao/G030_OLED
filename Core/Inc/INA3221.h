@@ -2,7 +2,7 @@
 #define _INA3221_H_
 //#include "Arduino.h"
 //#include "Wire.h"
-#include "sw_i2c.h"
+#include "swi2c.h"
 
 /*typedef enum {
     INA3221_ADDR40_GND = 0b1000000,  // A0 pin -> GND

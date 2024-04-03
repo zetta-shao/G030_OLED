@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include "main.h"
 #include "gpiodef.h"
-#include "sw_i2c.h"
+#include "swi2c.h"
+#include "swspi.h"
 #include "ssd1306.h"
 #include "lcd1602sw.h"
 #include "INA3221.h"
@@ -18,11 +19,14 @@ ADC_HandleTypeDef hadc1;
 int32_t devices = 0;
 int32_t vref;
 swi2c_t si2c1={0}, si2c2={0}, si2c3={0}, si2c4={0};
+swspi_t sspi1={0};
+swspi_t sspi3={0};
 lcd1602_t LCD1601 = { 0 };
 lcd1602_t LCD1602 = { 0 };
 lcd1602_t LCD1603 = { 0 };
 lcd1602_t LCD1604 = { 0 };
-SSD1306_t SH11061 = { 0 };
+SSD1306_t SD13061 = { 0 };
+SSD1306_t SD13062 = { 0 };
 INA3221_t ina3221 = { 0 };
 IP2365_t IP23651 = { 0 }; IP2365_t IP23652 = { 0 };
 sw35xx_t SW35181 = { 0 }; sw35xx_t SW35182 = { 0 };
@@ -205,28 +209,51 @@ void update_devices(SSD1306_t *led) {
 int main(void) {
   HAL_Init();
   GPIOinit();
-  SW_I2C_HWinit(&si2c1, &hi2c1);
-  SW_I2C_HWinit(&si2c2, &hi2c2);
-  SW_I2C_SWinit(&si2c3, SI2C1P, SI2C1L, SI2C1P, SI2C1A);
-  SW_I2C_SWinit(&si2c4, SI2C2P, SI2C2L, SI2C2P, SI2C2A);
+  swi2c_HWinit(&si2c1, &hi2c1);
+  swi2c_HWinit(&si2c2, &hi2c2);
+  {
+	  stm32_gpio_t SCL = { SI2C1P, SI2C1L };
+	  stm32_gpio_t SDA = { SI2C1P, SI2C1A };
+	  swi2c_SWinit(&si2c3, &SCL, &SDA);
+  }
+  {
+	  stm32_gpio_t SCL = { SI2C2P, SI2C2L };
+	  stm32_gpio_t SDA = { SI2C2P, SI2C2A };
+	  swi2c_SWinit(&si2c4, &SCL, &SDA);
+  }
+  swspi_HWinit(&sspi1, &hspi1);
+  {
+	  stm32_gpio_t CLK = { SPI3CLKP, SPI3CLK };
+	  stm32_gpio_t MOSI = { SPI3MOP, SPI3MOSI };
+	  swspi_SWinit(&sspi3, &CLK, &MOSI, NULL);
+	  swspi_setbits(&sspi3, 9);
+  }
   HAL_ADCEx_Calibration_Start(&hadc1);
   HAL_Delay(50);
   lcd_init(&LCD1601, &si2c1, 0);
   lcd_init(&LCD1602, &si2c2, 0);
   lcd_init(&LCD1603, &si2c3, 0);
   lcd_init(&LCD1604, &si2c4, 0);
-  //SSD1306_gpioinit4W(&SH11061, LCD_CS_P, LCD_CS, LCD_CD_P, LCD_CD);
-  SSD1306_gpioinit3W(&SH11061, LCD_CS_P, LCD_CS);
-  ssd1306_Init(&SH11061, &hspi1);
-  ina3221_begin(&ina3221, &si2c4);
-  IP2365_init(&IP23651, &si2c3);
-  IP2365_init(&IP23652, &si2c4);
-  sw35xx_init(&SW35181, &si2c1);
-  sw35xx_init(&SW35182, &si2c2);
-  sw35xx_init(&SW35182, &si2c3);
-  sw35xx_init(&SW35182, &si2c4);
-  ath20_init(&ath20, &si2c3);
-
+  {
+	  stm32_gpio_t CS = { LCD_CS_P, LCD_CS };
+	  //stm32_gpio_t RS = { LCD_RSP, LCD_RS };
+	  SSD1306_gpioinit3W2(&SD13061, &CS);
+	  SSD1306_Init(&SD13061, &sspi1);
+  }
+  {
+	  stm32_gpio_t SS = { SPI3SSP, SPI3SS };
+	  SSD1306_gpioinit3W2(&SD13062, &SS);
+	  SSD1306_Init(&SD13062, &sspi3);
+  }
+  //ina3221_begin(&ina3221, &si2c4);
+  //IP2365_init(&IP23651, &si2c3);
+  //IP2365_init(&IP23652, &si2c4);
+  //sw35xx_init(&SW35181, &si2c1);
+  //sw35xx_init(&SW35182, &si2c2);
+  //sw35xx_init(&SW35182, &si2c3);
+  //sw35xx_init(&SW35182, &si2c4);
+  //ath20_init(&ath20, &si2c3);
+#if 1
   {
 	  char str[64];
 
@@ -254,13 +281,13 @@ int main(void) {
 	  lcd_put_cur(&LCD1604, 1, 0);
 	  lcd_send_string(&LCD1604, str);
   }
-
-#if 0
-  ssd1306_SetCursor(&SH11061, 1, 0);
-  ssd1306_WriteString(&SH11061, "font6x8", Font_6x8, 1);
-  ssd1306_SetCursor(&SH11061, 65, 0);
-  ssd1306_WriteString(&SH11061, "font6x8", Font_6x8, 0);
-  ssd1306_UpdateScreen(&SH11061);
+#endif
+#if 1
+  ssd1306_SetCursor(&SD13062, 1, 0);
+  ssd1306_WriteString(&SD13062, "font6x8", Font_6x8, 1);
+  ssd1306_SetCursor(&SD13062, 65, 0);
+  ssd1306_WriteString(&SD13062, "font6x8", Font_6x8, 0);
+  ssd1306_UpdateScreen(&SD13062);
 #endif
 #if 0
   {
@@ -274,23 +301,23 @@ int main(void) {
   }
 #endif
   HAL_TIM_Base_Start_IT(&htim14);
-  init_adc(&hadc1, &SH11061);
-  update_devices(&SH11061);
+  init_adc(&hadc1, &SD13061);
+  update_devices(&SD13061);
   while (1) {
-	  //update_ina3221(&ina3221, &SH11061);
-	  //update_sw3518(&SW35184, &SH11061);
-	  //update_ath20(&ath20, &SH11061);
-	  update_adc(&hadc1, &SH11061);
-	  lcd_set_cursor_on(&LCD1601, 1); lcd_set_cursor_on(&LCD1602, 1);
-	  lcd_set_cursor_on(&LCD1603, 1); lcd_set_cursor_on(&LCD1604, 1);
+	  //update_ina3221(&ina3221, &SD13061);
+	  //update_sw3518(&SW35184, &SD13061);
+	  //update_ath20(&ath20, &SD13061);
+	  update_adc(&hadc1, &SD13061);
+	  lcd_set_backlight_on(&LCD1601, 1); lcd_set_backlight_on(&LCD1602, 1);
+	  lcd_set_backlight_on(&LCD1603, 1); lcd_set_backlight_on(&LCD1604, 1);
 	  //HAL_GPIO_WritePin(EVB_LED_P, EVB_LED, GPIO_PIN_SET);
 	  HAL_Delay(3000);
-	  //update_ina3221(&ina3221, &SH11061);
-	  //update_sw3518(&SW35184, &SH11061);
-	  //update_ath20(&ath20, &SH11061);
-	  update_adc(&hadc1, &SH11061);
-	  lcd_set_cursor_on(&LCD1601, 0); lcd_set_cursor_on(&LCD1602, 0);
-	  lcd_set_cursor_on(&LCD1603, 0); lcd_set_cursor_on(&LCD1604, 0);
+	  //update_ina3221(&ina3221, &SD13061);
+	  //update_sw3518(&SW35184, &SD13061);
+	  //update_ath20(&ath20, &SD13061);
+	  update_adc(&hadc1, &SD13061);
+	  lcd_set_backlight_on(&LCD1601, 0); lcd_set_backlight_on(&LCD1602, 0);
+	  lcd_set_backlight_on(&LCD1603, 0); lcd_set_backlight_on(&LCD1604, 0);
 	  //HAL_GPIO_WritePin(EVB_LED_P, EVB_LED, GPIO_PIN_RESET);
 	  HAL_Delay(3000);
   }
@@ -299,6 +326,8 @@ int main(void) {
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         if(htim == &htim14) {
                 HAL_GPIO_TogglePin(EVB_LED_P, EVB_LED);
+                HAL_GPIO_TogglePin(SPI3SSP, SPI3SS);
+                HAL_GPIO_TogglePin(LCD_RSP, LCD_RS);
         }
 }
 

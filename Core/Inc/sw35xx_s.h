@@ -2,7 +2,7 @@
 #define __INCL_SW35XX_H__
 //#include <stdint.h>
 //#include <Wire.h>
-#include "sw_i2c.h"
+#include "swi2c.h"
 
 #ifndef BIT
 #define BIT(x) (1 << (x))

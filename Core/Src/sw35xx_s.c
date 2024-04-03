@@ -56,7 +56,7 @@ int SW35xx_i2cReadReg8(struct t_sw35xx *d, const uint8_t reg) {
 	int32_t i = I2C_RETRIES;
 	uint32_t val=0;
 	for(; i > 0; i--) {
-		if(SW_I2C_Read_8addr(d->pDev, SW35XX_ADDRESS, reg, (uint8_t*)&val, 1) == 0) break;
+		if(swi2c_Read_8addr(d->pDev, SW35XX_ADDRESS, reg, (uint8_t*)&val, 1) == 0) break;
 	}
 	return val;
 }
@@ -73,7 +73,7 @@ int SW35xx_i2cWriteReg8(struct t_sw35xx *d, const uint8_t reg, const uint8_t dat
   return error;*/
 	int32_t i = I2C_RETRIES;
 	for(; i > 0; i--) {
-		if(SW_I2C_Write_8addr(d->pDev, SW35XX_ADDRESS, reg, (uint8_t*)&data, 1) == 0) break;
+		if(swi2c_Write_8addr(d->pDev, SW35XX_ADDRESS, reg, (uint8_t*)&data, 1) == 0) break;
 	}
 	return (i == 0) ? 2 : 0;
 }
@@ -268,7 +268,7 @@ void SW35xx_setMaxCurrentsPPS(struct t_sw35xx *d, uint32_t ma_pps1, uint32_t ma_
 uint8_t sw35xx_readreg8(struct t_sw35xx *d, uint8_t addr, uint8_t *data) {
 	int32_t i = I2C_RETRIES;
 	for(; i>0; i--) {
-		if(SW_I2C_Read_8addr(d->pDev, SW35XX_ADDRESS, addr, data, 1) == 0) break;
+		if(swi2c_Read_8addr(d->pDev, SW35XX_ADDRESS, addr, data, 1) == 0) break;
 	}
 	return (i == 0) ? 2 : 0;
 }
@@ -276,7 +276,7 @@ uint8_t sw35xx_readreg8(struct t_sw35xx *d, uint8_t addr, uint8_t *data) {
 uint8_t sw35xx_writereg8(struct t_sw35xx *d, uint8_t addr, uint8_t data) {
 	int32_t i = I2C_RETRIES;
 	for(; i>0; i--) {
-		if(SW_I2C_Write_8addr(d->pDev, SW35XX_ADDRESS, addr, &data, 1) == 0) break;
+		if(swi2c_Write_8addr(d->pDev, SW35XX_ADDRESS, addr, &data, 1) == 0) break;
 	}
 	return (i == 0) ? 2 : 0;
 }

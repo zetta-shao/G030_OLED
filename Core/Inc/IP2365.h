@@ -1,6 +1,6 @@
 #ifndef __INCL_IP2365_H__
 #define __INCL_IP2365_H__
-#include "sw_i2c.h"
+#include "swi2c.h"
 
 #define i2caddr	0x75
 

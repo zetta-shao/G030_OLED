@@ -19,45 +19,89 @@ void ssd1306_WriteData(struct tSSD1306 *d, uint8_t* buffer, size_t buff_size) {
 #elif defined(SSD1306_USE_SPI)
 //struct __SPI_HandleTypeDef *_SSD1306_SPI_PORT = NULL;
 void ssd1306_Reset(struct tSSD1306 *d) { //Reset the OLED //CS = High (not selected)
-	if(d->RST_PORT == NULL) return;
-    HAL_GPIO_WritePin(d->CS_PORT, d->cs_pin, GPIO_PIN_RESET);
-    HAL_GPIO_WritePin(d->RST_PORT, d->rst_pin, GPIO_PIN_RESET);
-    HAL_Delay(10);
-    HAL_GPIO_WritePin(d->RST_PORT, d->rst_pin, GPIO_PIN_SET);
-    HAL_Delay(10);
-    HAL_GPIO_WritePin(d->CS_PORT, d->cs_pin, GPIO_PIN_SET);
+	//if(d->RST_PORT == NULL) return;
+	if(d->RST.pin == 65535) return;
+    //HAL_GPIO_WritePin(d->CS_PORT, d->cs_pin, GPIO_PIN_RESET);
+    swspi_setgpo(&d->CS, 0);
+    //HAL_GPIO_WritePin(d->RST_PORT, d->rst_pin, GPIO_PIN_RESET);
+    swspi_setgpo(&d->RST, 0);
+    //HAL_Delay(10);
+    swspi_delay_ms(10);
+    //HAL_GPIO_WritePin(d->RST_PORT, d->rst_pin, GPIO_PIN_SET);
+    swspi_setgpo(&d->RST, 0);
+    //HAL_Delay(10);
+    swspi_delay_ms(10);
+    //HAL_GPIO_WritePin(d->CS_PORT, d->cs_pin, GPIO_PIN_SET);
+    swspi_setgpo(&d->CS, 1);
 }
 
 // Send a byte to the command register
 void ssd1306_WriteCommand(struct tSSD1306 *d, uint8_t byte) {
-	uint8_t pT[2];
+    uint16_t tmp=0; uint8_t *pT=(uint8_t*)&tmp;
+#if 0
+	//uint8_t pT[2];
     HAL_GPIO_WritePin(d->CS_PORT, d->cs_pin, GPIO_PIN_RESET); // select OLED
 	if((d->flag & __OLED_3WSPI) != 0) { //must set SPI 9bit data mode first
 		pT[0] = byte; pT[1] = 0;
-	    HAL_SPI_Transmit(d->pD, pT, 1, HAL_MAX_DELAY);
+	    HAL_SPI_Transmit(d->pDev, pT, 1, HAL_MAX_DELAY);
 	} else {
 	    HAL_GPIO_WritePin(d->DC_PORT, d->dc_pin, GPIO_PIN_RESET); // command
-    	HAL_SPI_Transmit(d->pD, (uint8_t *) &byte, 1, HAL_MAX_DELAY);
+    	HAL_SPI_Transmit(d->pDev, (uint8_t *) &byte, 1, HAL_MAX_DELAY);
 	}
     HAL_GPIO_WritePin(d->CS_PORT, d->cs_pin, GPIO_PIN_SET); // un-select OLED
+#else
+    swspi_setgpo(&d->CS, 0); // select OLED
+	if((d->flag & __OLED_3WSPI) != 0) { //must set SPI 9bit data mode first
+		pT[0] = byte;
+	    //HAL_SPI_Transmit(d->pDev, pT, 1, HAL_MAX_DELAY);
+	    swspi_write(d->pDev, pT, 1);
+	} else {
+	    //HAL_GPIO_WritePin(d->DC_PORT, d->dc_pin, GPIO_PIN_RESET); // command
+	    swspi_setgpo(&d->DC, 0); // data
+    	//HAL_SPI_Transmit(d->pDev, (uint8_t *) &byte, 1, HAL_MAX_DELAY);
+    	swspi_write(d->pDev, &byte, 1);
+	}
+	swspi_setgpo(&d->CS, 1); // un-select OLED
+
+#endif
 }
 
 // Send data
 void ssd1306_WriteData(struct tSSD1306 *d, uint8_t* buffer, size_t buff_size) {
-	uint8_t pT[2];
+    uint16_t tmp=256; uint8_t *pT=(uint8_t*)&tmp;
+#if 0
+	//uint8_t pT[2];
     HAL_GPIO_WritePin(d->CS_PORT, d->cs_pin, GPIO_PIN_RESET); // select OLED
 	if((d->flag & __OLED_3WSPI) != 0) { //must set SPI 9bit data mode first
-	    for(pT[1]=1; buff_size > 0; buff_size--, buffer++) {
+	    for(pT[1]=1; buff_size>0; buff_size--, buffer++) {
 	    	pT[0] = *buffer;
-	    	HAL_SPI_Transmit(d->pD, pT, 1, HAL_MAX_DELAY);
+	    	HAL_SPI_Transmit(d->pDev, pT, 1, HAL_MAX_DELAY);
 	    }
 	} else {
 	    HAL_GPIO_WritePin(d->DC_PORT, d->dc_pin, GPIO_PIN_SET); // data
-	    if(d->pD) { HAL_SPI_Transmit(d->pD, buffer, buff_size, HAL_MAX_DELAY); }
-	    else { if(d->CLK_PORT) { /*for soft SPI*/ } }
+	    HAL_SPI_Transmit(d->pDev, buffer, buff_size, HAL_MAX_DELAY);
+
 	    HAL_GPIO_WritePin(d->DC_PORT, d->dc_pin, GPIO_PIN_RESET); // command
 	}
     HAL_GPIO_WritePin(d->CS_PORT, d->cs_pin, GPIO_PIN_SET); // un-select OLED
+#else
+    swspi_setgpo(&d->CS, 0); // select OLED
+    //HAL_GPIO_WritePin(d->CS_PORT, d->cs_pin, GPIO_PIN_RESET); // select OLED
+	if((d->flag & __OLED_3WSPI) != 0) { //must set SPI 9bit data mode first
+	    for(; buff_size>0; buff_size--, buffer++) {
+	    	pT[0] = *buffer;
+	    	//HAL_SPI_Transmit(d->pDev, pT, 1, HAL_MAX_DELAY);
+	    	swspi_write(d->pDev, pT, 1);
+	    }
+	} else {
+		swspi_setgpo(&d->DC, 1); // data
+	    //HAL_SPI_Transmit(d->pDev, buffer, buff_size, HAL_MAX_DELAY);
+		swspi_write(d->pDev, buffer, buff_size);
+	    swspi_setgpo(&d->DC, 0); // command
+	}
+	swspi_setgpo(&d->CS, 1); // un-select OLED
+	//HAL_GPIO_WritePin(d->CS_PORT, d->cs_pin, GPIO_PIN_SET); // select OLED
+#endif
 }
 
 #else
@@ -75,55 +119,64 @@ SSD1306_Error_t ssd1306_FillBuffer(struct tSSD1306 *d, uint8_t* buf, uint32_t le
     return SSD1306_OK;
 }
 
-void SSD1306_gpioSWSPI(struct tSSD1306 *d, void* SWCLKport, uint16_t SWCLKpin, void* SWDATAport, uint16_t SWDATApin) {
-	if(SWCLKport) { d->CLK_PORT=SWCLKport; d->clk_pin=SWCLKpin; }
-	else { d->CLK_PORT=NULL; d->clk_pin=65535; }
-	if(SWDATAport) { d->DATA_PORT=SWDATAport; d->dta_pin=SWDATApin; }
-	else { d->DATA_PORT=NULL; d->dta_pin=65535; }
-}
+//void SSD1306_gpioSetCS(struct tSSD1306 *d, void* CSport, uint16_t CSpin) {
+//	if(CSport) { d->CS_PORT=CSport; d->cs_pin=CSpin; }
+//	else { d->CS_PORT=NULL; d->cs_pin=65535; }
+//}
 
-void SSD1306_gpioSetCS(struct tSSD1306 *d, void* CSport, uint16_t CSpin) {
-	if(CSport) { d->CS_PORT=CSport; d->cs_pin=CSpin; }
-	else { d->CS_PORT=NULL; d->cs_pin=65535; }
-}
+//void SSD1306_gpioSetDC(struct tSSD1306 *d, void* DCport, uint16_t DCpin) {
+//	if(DCport) { d->DC_PORT=DCport; d->dc_pin=DCpin; }
+//	else { d->DC_PORT=NULL; d->dc_pin=65535; }
+//}
 
-void SSD1306_gpioSetDC(struct tSSD1306 *d, void* DCport, uint16_t DCpin) {
-	if(DCport) { d->DC_PORT=DCport; d->dc_pin=DCpin; }
-	else { d->DC_PORT=NULL; d->dc_pin=65535; }
-}
+//void SSD1306_gpioSetRST(struct tSSD1306 *d, void* RSTport, uint16_t RSTpin ) {
+//	if(RSTport) { d->RST_PORT=RSTport; d->rst_pin=RSTpin; }
+//	else { d->RST_PORT=NULL; d->rst_pin=65535; }
+//}
 
-void SSD1306_gpioSetRST(struct tSSD1306 *d, void* RSTport, uint16_t RSTpin ) {
-	if(RSTport) { d->RST_PORT=RSTport; d->rst_pin=RSTpin; }
-	else { d->RST_PORT=NULL; d->rst_pin=65535; }
+//void SSD1306_gpioinitSW(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin, void* RSTport, uint16_t RSTpin) {
+//	SSD1306_gpioSetCS(d, CSport, CSpin);
+//	SSD1306_gpioSetDC(d, DCport, DCpin);
+//	SSD1306_gpioSetRST(d, RSTport, RSTpin);
+//}
+void SSD1306_gpioinit5W2(struct tSSD1306 *d, ssd1306_gpio_t *CS, ssd1306_gpio_t *DC, ssd1306_gpio_t *RST) {
+	d->pDev=NULL;
+	d->CS.port=NULL; d->CS.pin=65535;
+	d->DC.port=NULL; d->DC.pin=65535;
+	d->RST.port=NULL; d->RST.pin=65535;
+	d->flag = 0;
+	d->i2c_addr = 0x3c;
+	d->CurrentX = 0;
+	d->CurrentY = 0;
+	if(CS) { d->CS.port=CS->port; d->CS.pin=CS->pin; };
+	if(DC) { d->DC.port=DC->port; d->DC.pin=DC->pin; };
+	if(RST) { d->RST.port=RST->port; d->RST.pin=RST->pin; };
 }
+//void SSD1306_gpioinit5W(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin, void* RSTport, uint16_t RSTpin) {
+//	SSD1306_gpioinitSW(d, CSport, CSpin, DCport, DCpin, RSTport, RSTpin);
+//}
 
-void SSD1306_gpioinitSW(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin, void* RSTport, uint16_t RSTpin, void* SWCLKport, uint16_t SWCLKpin, void* SWDATAport, uint16_t SWDATApin) {
-	SSD1306_gpioSetCS(d, CSport, CSpin);
-	SSD1306_gpioSetDC(d, DCport, DCpin);
-	SSD1306_gpioSetRST(d, RSTport, RSTpin);
-	SSD1306_gpioSWSPI(d, SWCLKport, SWCLKpin, SWDATAport, SWDATApin);
-}
+//void SSD1306_gpioinit4W(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin) {
+//	SSD1306_gpioinitSW(d, CSport, CSpin, DCport, DCpin, NULL, 0);
+//}
+void SSD1306_gpioinit4W2(struct tSSD1306 *d, ssd1306_gpio_t *CS, ssd1306_gpio_t *DC) { SSD1306_gpioinit5W2(d, CS, DC, NULL); }
 
-void SSD1306_gpioinit5W(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin, void* RSTport, uint16_t RSTpin) {
-	SSD1306_gpioinitSW(d, CSport, CSpin, DCport, DCpin, RSTport, RSTpin, NULL, 0, NULL, 0);
-}
+//void SSD1306_gpioinit3W(struct tSSD1306 *d, void* CSport, uint16_t CSpin) {
+//	SSD1306_gpioinitSW(d, CSport, CSpin, NULL, 0, NULL, 0);
+//	d->flag |= __OLED_3WSPI;
+//}
 
-void SSD1306_gpioinit4W(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin) {
-	SSD1306_gpioinitSW(d, CSport, CSpin, DCport, DCpin, NULL, 0, NULL, 0, NULL, 0);
-}
-
-void SSD1306_gpioinit3W(struct tSSD1306 *d, void* CSport, uint16_t CSpin) {
-	SSD1306_gpioinitSW(d, CSport, CSpin, NULL, 0, NULL, 0, NULL, 0, NULL, 0);
+void SSD1306_gpioinit3W2(struct tSSD1306 *d, ssd1306_gpio_t *CS) {
+	SSD1306_gpioinit5W2(d, CS, NULL, NULL);
 	d->flag |= __OLED_3WSPI;
 }
 
-
 /* Initialize the oled screen */
-void ssd1306_Init(struct tSSD1306 *d, void *pvport) {
+void SSD1306_Init(struct tSSD1306 *d, void *pvport) {
 #if defined(SSD1306_USE_I2C)
-	d->pD = (struct __I2C_HandleTypeDef *)pvport;
+	d->pDev = (swi2c_t*)pvport;
 #elif defined(SSD1306_USE_SPI)
-	d->pD = (struct __SPI_HandleTypeDef *)pvport;
+	d->pDev	= (swspi_t*)pvport;
 #endif
     // Reset OLED
     ssd1306_Reset(d);
@@ -217,9 +270,9 @@ void ssd1306_Init(struct tSSD1306 *d, void *pvport) {
 }
 void SH1106_Init(struct tSSD1306 *d, void *pvport) {
 #if defined(SSD1306_USE_I2C)
-	d->pD = (struct __I2C_HandleTypeDef *)pvport;
+	d->pDev = (swi2c_t*)pvport;
 #elif defined(SSD1306_USE_SPI)
-	d->pD = (struct __SPI_HandleTypeDef *)pvport;
+	d->pDev	= (swspi_t*)pvport;
 #endif
     //ssd1306_Reset(d); // Reset OLED
     //HAL_Delay(100); // Wait for the screen to boot
@@ -667,12 +720,15 @@ void ssd1306_SetDisplayOn(struct tSSD1306 *d, const uint8_t on) {
     uint8_t value;
     if (on) {
         value = 0xAF;   // Display on
-        d->DisplayOn = 1;
+        //d->DisplayOn = 1;
+        d->flag |= __DISPLAY_ON;
     } else {
         value = 0xAE;   // Display off
-        d->DisplayOn = 0;
+        //d->DisplayOn = 0;
+        d->flag &= ~__DISPLAY_ON;
     }
     ssd1306_WriteCommand(d, value);
 }
 
-uint8_t ssd1306_GetDisplayOn(struct tSSD1306 *d) { return d->DisplayOn; }
+//uint8_t ssd1306_GetDisplayOn(struct tSSD1306 *d) { return d->DisplayOn; }
+uint8_t ssd1306_GetDisplayOn(struct tSSD1306 *d) { return (d->flag & __DISPLAY_ON)?1:0; }

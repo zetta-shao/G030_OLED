@@ -1,7 +1,7 @@
 #ifndef __AHT20_H__
 #define __AHT20_H__
 
-#include "sw_i2c.h"
+#include "swi2c.h"
 #include "gpiodef.h"
 #define ath20_addr	0x38
 #define ath20_cmd_pwron		0x71

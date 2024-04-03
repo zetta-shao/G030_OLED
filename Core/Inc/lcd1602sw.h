@@ -27,5 +27,5 @@ void lcd_clear(lcd1602_t *p);
 uint8_t lcd_send_data(lcd1602_t *p, char data);
 uint8_t lcd_send_cmd(lcd1602_t *p, char cmd);
 void lcd_put_cur(lcd1602_t *p, uint8_t row,uint8_t col);
-void lcd_set_cursor_on(lcd1602_t *p, uint8_t on);
+void lcd_set_backlight_on(lcd1602_t *p, uint8_t on);
 #endif

@@ -18,7 +18,7 @@
 #define SPI1L		GPIO_PIN_5	//12
 #define SPI1O		GPIO_PIN_7	//14
 #define SPI1P		GPIOA
-#define TIM3C1		GPIO_PIN_4	//20 //PB3/PB4/PB5/PB6
+#define TIM3C1		GPIO_PIN_3	//20 //PB3/PB4/PB5/PB6
 #define TIM3P		GPIOB
 #define SI2C2A		GPIO_PIN_0	//7
 #define SI2C2L		GPIO_PIN_1	//8
@@ -38,6 +38,14 @@
 #define EVB_LED		GPIO_PIN_8	//15
 #define EVB_LED2	GPIO_PIN_4	//11
 #define EVB_LED_P	GPIOA	//15
+#define SPI3CLK		GPIO_PIN_6
+#define SPI3CLKP	GPIOA
+#define SPI3MOSI	GPIO_PIN_8
+#define SPI3MOP		GPIOA
+#define SPI3SS		GPIO_PIN_3	//20
+#define SPI3SSP		GPIOB
+#define LCD_RS		GPIO_PIN_15	//20
+#define LCD_RSP		GPIOC
 
 #define SSD1306_DC_GPIO_Port	LCD_CD_P
 #define SSD1306_DC_Pin			LCD_CD

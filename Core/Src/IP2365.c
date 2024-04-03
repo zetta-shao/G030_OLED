@@ -3,31 +3,31 @@
 
 void writeReg(IP2365_t *d, uint8_t reg, uint8_t val) {
 	if(!d || d->pD == NULL) return;
-	SW_I2C_Write_8addr(d->pD, i2caddr, reg, &val, 1);
+	swi2c_Write_8addr(d->pD, i2caddr, reg, &val, 1);
 }
 
 void writeRegP(IP2365_t *d, uint8_t reg, uint8_t *val) {
 	if(!d || d->pD == NULL) return;
-	SW_I2C_Write_8addr(d->pD, i2caddr, reg, val, 1);
+	swi2c_Write_8addr(d->pD, i2caddr, reg, val, 1);
 }
 
 uint8_t readReg(IP2365_t *d, uint8_t reg) {
 	uint8_t val;
 	if(!d || d->pD == NULL) return 255;
-	SW_I2C_Read_8addr(d->pD, i2caddr, reg, &val, 1);
+	swi2c_Read_8addr(d->pD, i2caddr, reg, &val, 1);
 	return val;
 }
 
 void readRegP(IP2365_t *d, uint8_t reg, uint8_t *val) {
 	if(!d || d->pD == NULL) return;
-	SW_I2C_Read_8addr(d->pD, i2caddr, reg, val, 1);
+	swi2c_Read_8addr(d->pD, i2caddr, reg, val, 1);
 }
 
 void IP2365_init(IP2365_t *d, swi2c_t *pDev) {
 	uint8_t val;
 	d->pD = pDev;
 	swi2c_dummy_clock(d->pD);
-	if(SW_I2C_Read_8addr(d->pD, i2caddr, IP2365_REG_SYSCTL1, &val, 1) != 0) //getChargeEnable
+	if(swi2c_Read_8addr(d->pD, i2caddr, IP2365_REG_SYSCTL1, &val, 1) != 0) //getChargeEnable
 		d->pD = NULL;
 }
 

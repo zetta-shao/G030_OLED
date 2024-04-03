@@ -38,14 +38,14 @@ void ina3221_read(struct t_INA3221 *d, uint16_t reg, uint16_t *val) {
     //pDev->requestFrom((uint8_t)_i2c_addr, (uint8_t)2);
     //if (pDev->available()) { *val = ((pDev->read() << 8) | pDev->read()); }
 	if(d->pDev == NULL) return;
-    SW_I2C_Read_8addr(d->pDev, d->_i2c_addr, reg, (uint8_t*)val, 2);
+    swi2c_Read_8addr(d->pDev, d->_i2c_addr, reg, (uint8_t*)val, 2);
     swapwordp(val);
 }
 
 uint16_t ina3221_read16(struct t_INA3221 *d, uint16_t reg) {
 	uint16_t val;
 	if(d->pDev == NULL) return 65535;
-	SW_I2C_Read_8addr(d->pDev, d->_i2c_addr, reg, (uint8_t*)&val, 2);
+	swi2c_Read_8addr(d->pDev, d->_i2c_addr, reg, (uint8_t*)&val, 2);
 	swapwordp(&val);
 	return val;
 }
@@ -58,13 +58,13 @@ void ina3221_write(struct t_INA3221 *d, uint16_t reg, uint16_t *val) {
     //_i2c->endTransmission();
 	if(d->pDev == NULL) return;
 	swapwordp(val);
-    SW_I2C_Write_8addr(d->pDev, d->_i2c_addr, reg, (uint8_t*)val, 2);
+    swi2c_Write_8addr(d->pDev, d->_i2c_addr, reg, (uint8_t*)val, 2);
 }
 
 void ina3221_write16(struct t_INA3221 *d, uint16_t reg, uint16_t val) {
 	if(d->pDev == NULL) return;
 	swapwordp(&val);
-    SW_I2C_Write_8addr(d->pDev, d->_i2c_addr, reg, (uint8_t*)&val, 2);
+    swi2c_Write_8addr(d->pDev, d->_i2c_addr, reg, (uint8_t*)&val, 2);
 }
 
 //void HAL_Delay(uint32_t Delay); //stm32 api

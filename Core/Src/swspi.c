@@ -12,18 +12,22 @@
 //void swspi_initial(swspi_t *d) { if (!d) return; d->hal_init(d); }
 
 void swspi_SWinit(swspi_t *d, spi_gpio_t *clk, spi_gpio_t *mosi, spi_gpio_t *miso) {
+	d->cpol = 0;
+	d->cpha = 0;
 	d->Delay_Time = SWSPI_DELAY;
 	d->bitmask = 0x80;
 	swspi_hal_init(d, clk, mosi, miso);
 }
 
 void swspi_HWinit(swspi_t *d, void *hWND) {
+	d->cpol = 0;
+	d->cpha = 0;
 	d->Delay_Time = 0;
 	d->bitmask = 0;
 	swspi_hal_init(d, (spi_gpio_t*)hWND, NULL, NULL);
 }
 
-void swspi_setbits(swspi_t *d, uint8_t val) { if(val>0) d->bitmask = 1 << val; else d->bitmask=0; }
+void swspi_setbits(swspi_t *d, uint8_t val) { if(val>0) d->bitmask = 1 << (val-1); else d->bitmask=0; }
 
 //void swspi_setCLK(swspi_t *d) { d->hal_io_ctl(IOCTL_SWSPI_SET_GPIO_HIGH, &d->CLK); }
 //void swspi_clrCLK(swspi_t *d) { d->hal_io_ctl(IOCTL_SWSPI_SET_GPIO_LOW, &d->CLK); }
@@ -62,24 +66,23 @@ void __swspi_write(swspi_t *d, uint16_t val) {
 	uint16_t i;
 	if(!d) return;
 	i = d->bitmask;
-	swspi_hal_gpio_out(&d->CLK, 1);
 	for(; i!=0; i>>=1) {
 		//swspi_clrCLK(d);
-		swspi_hal_gpio_out(&d->CLK, 0);
+		swspi_hal_gpio_out(&d->CLK, d->cpol ^ 0);
 		//delay_def(d);
 		swspi_delay_us(d->Delay_Time);
 		//if(val & i) swspi_setMOSI(d);
 		//else swspi_clrMOSI(d);
-		swspi_hal_gpio_out(&d->MOSI, (val&i)?1:0);
+		swspi_hal_gpio_out(&d->MOSI, ((val&i)?1:0) ^ d->cpha);
 		//delay_def(d);
 		swspi_delay_us(d->Delay_Time);
 		//swspi_setCLK(d);
-		swspi_hal_gpio_out(&d->CLK, 1);
+		swspi_hal_gpio_out(&d->CLK, 1 ^ d->cpol);
 		//delay_def(d);
 		swspi_delay_us(d->Delay_Time);
 	}
 	//swspi_clrMOSI(d);
-	swspi_hal_gpio_out(&d->MOSI, 1);
+	swspi_hal_gpio_out(&d->MOSI, 1 ^ d->cpol);
 }
 
 uint16_t __swspi_read(swspi_t *d) {

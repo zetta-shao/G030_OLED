@@ -67,53 +67,32 @@ uint8_t lcd_init(lcd1602_t *p, struct tag_swi2c *d, uint8_t i2cadr) {
 	p->bklg = LCD_BACKLIGHT;
 	//if(swi2c_Read_0addr(p->d, LCD_ADDRESS, &res, 1) != 0) { p->d = NULL; return 255; }
 	swi2c_dummy_clock(p->d);
-	p->log[0] = swi2c_Read_0addr(p->d, p->i2c_addr, p->log+1, 1);
 
-	//swi2c_delay_ms(50); //HAL_Delay(100);
-	//lcd_write(p, 0x33, 0);
-	//HAL_Delay(10);
-	//swi2c_delay_us(40);
-	//lcd_wait_ready(p);
-	//lcd_write(p, 0x33, 0);
-	//HAL_Delay(10);
-	////lcd_wait_ready(p);
-	//swi2c_delay_us(40);
-	//lcd_write(p, 0x33, 0);
-	//HAL_Delay(10);
-	//swi2c_delay_us(40);
-	////lcd_wait_ready(p);
+	lcd_write(p, 0x33, 0);
+	swi2c_delay_ms(16);
 
-	lcd_write(p, 0x20, 0);
-	//HAL_Delay(10);
+	lcd_write(p, 0x33, 0);
+	swi2c_delay_us(40);
+
+	lcd_write(p, 0x33, 0);
+	swi2c_delay_us(40);
+
+	lcd_write(p, 0x32, 0);
 	swi2c_delay_us(40);
 
 	lcd_write(p, 0x28, 0);
-	//HAL_Delay(10);
 	swi2c_delay_us(40);
 
 	lcd_write(p, 0x02, 0);		//function set
-	//p->log[0] = lcd_read_cmd(p);
-	//HAL_Delay(2);
 	swi2c_delay_us(1600);
-	//p->log[1] = lcd_read_cmd(p);
-	//swi2c_delay_ms(2);
-	//lcd_wait_ready(p);
 	//lcd_send_cmd(d, 0x08);		//Display on/off
 	lcd_write(p, 0x0c, 0);		//Display on/off
-	//HAL_Delay(1);
 	swi2c_delay_us(40);
-	//lcd_wait_ready(p);
 	lcd_write(p, 0x01, 0);		//clear display
 	HAL_Delay(5);
-	//lcd_wait_ready(p);
-	//swi2c_delay_ms(5);
 	lcd_write(p, 0x06, 0);		//Enter mode
-	//HAL_Delay(1);
-	////lcd_wait_ready(p);
 	swi2c_delay_us(40);
 	lcd_write(p, 0x0C, 0);		//Display on/off
-	//HAL_Delay(1);
-	////lcd_wait_ready(p);
 	swi2c_delay_us(40);
 	return res;
 }

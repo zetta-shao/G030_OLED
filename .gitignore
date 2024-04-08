@@ -1,4 +1,5 @@
 [Dd]ebug/
 [Rr]elease/
 kicad-proj/ina3221-mcu-backups/
+.settings/
 *.launch

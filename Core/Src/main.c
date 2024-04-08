@@ -18,15 +18,19 @@ TIM_HandleTypeDef htim3;
 ADC_HandleTypeDef hadc1;
 int32_t devices = 0;
 int32_t vref;
+int8_t env_key1 = 0;
+int8_t env_key2 = 0;
+int8_t env_key3 = 0;
+int8_t _val_ = 0;
 swi2c_t si2c1={0}, si2c2={0}, si2c3={0}, si2c4={0};
 swspi_t sspi1={0};
-swspi_t sspi3={0};
+//swspi_t sspi3={0};
 lcd1602_t LCD1601 = { 0 };
 lcd1602_t LCD1602 = { 0 };
 lcd1602_t LCD1603 = { 0 };
 lcd1602_t LCD1604 = { 0 };
 SSD1306_t SD13061 = { 0 };
-SSD1306_t SD13062 = { 0 };
+//SSD1306_t SD13062 = { 0 };
 INA3221_t ina3221 = { 0 };
 IP2365_t IP23651 = { 0 }; IP2365_t IP23652 = { 0 };
 sw35xx_t SW35181 = { 0 }; sw35xx_t SW35182 = { 0 };
@@ -166,7 +170,7 @@ void update_adc(ADC_HandleTypeDef *d, SSD1306_t *led) {
 	//HAL_ADC_Stop(d);
 	//res >>= 2;
 
-	sprintf(str, "chip_vref %ld", vref);
+	sprintf(str, "chip_vref %ld %ld    ", vref, _val_);
 	ssd1306_SetCursor(led, 0, 8);
 	ssd1306_WriteString(led, str, Font_6x8, 1);
 	ssd1306_UpdateScreen(led);
@@ -180,7 +184,7 @@ void update_adc(ADC_HandleTypeDef *d, SSD1306_t *led) {
 	HAL_ADC_Stop(d);
 	idx = __LL_ADC_CALC_TEMPERATURE(vref, res, LL_ADC_RESOLUTION_12B);
 
-	sprintf(str, "chip_temp %ld %ld", idx, res);
+	sprintf(str, "chip_temp %ld %ld    ", idx, res);
 	ssd1306_SetCursor(led, 0, 0);
 	ssd1306_WriteString(led, str, Font_6x8, 1);
 	ssd1306_UpdateScreen(led);
@@ -222,12 +226,14 @@ int main(void) {
 	  swi2c_SWinit(&si2c4, &SCL, &SDA);
   }
   swspi_HWinit(&sspi1, &hspi1);
+#ifdef sspi3
   {
 	  stm32_gpio_t CLK = { SPI3CLKP, SPI3CLK };
 	  stm32_gpio_t MOSI = { SPI3MOP, SPI3MOSI };
 	  swspi_SWinit(&sspi3, &CLK, &MOSI, NULL);
 	  swspi_setbits(&sspi3, 9);
   }
+#endif
   HAL_ADCEx_Calibration_Start(&hadc1);
   HAL_Delay(50);
   lcd_init(&LCD1601, &si2c1, 0);
@@ -240,11 +246,13 @@ int main(void) {
 	  SSD1306_gpioinit3W2(&SD13061, &CS);
 	  SSD1306_Init(&SD13061, &sspi1);
   }
+#ifdef SD13062
   {
 	  stm32_gpio_t SS = { SPI3SSP, SPI3SS };
 	  SSD1306_gpioinit3W2(&SD13062, &SS);
 	  SSD1306_Init(&SD13062, &sspi3);
   }
+#endif
   //ina3221_begin(&ina3221, &si2c4);
   //IP2365_init(&IP23651, &si2c3);
   //IP2365_init(&IP23652, &si2c4);
@@ -282,7 +290,7 @@ int main(void) {
 	  lcd_send_string(&LCD1604, str);
   }
 #endif
-#if 1
+#if 0
   ssd1306_SetCursor(&SD13062, 1, 0);
   ssd1306_WriteString(&SD13062, "font6x8", Font_6x8, 1);
   ssd1306_SetCursor(&SD13062, 65, 0);
@@ -300,34 +308,46 @@ int main(void) {
 	  lcd_send_string(&si2c3, str);
   }
 #endif
-  HAL_TIM_Base_Start_IT(&htim14);
   init_adc(&hadc1, &SD13061);
   update_devices(&SD13061);
+  _val_ = 0;
   while (1) {
 	  //update_ina3221(&ina3221, &SD13061);
 	  //update_sw3518(&SW35184, &SD13061);
+	  if(env_key1 > 0) { _val_++; env_key1--; }
+	  if(env_key2 > 0) { _val_--; env_key2--; }
+	  if(env_key3 > 0) { _val_=0; env_key3--; }
 	  //update_ath20(&ath20, &SD13061);
 	  update_adc(&hadc1, &SD13061);
 	  lcd_set_backlight_on(&LCD1601, 1); lcd_set_backlight_on(&LCD1602, 1);
 	  lcd_set_backlight_on(&LCD1603, 1); lcd_set_backlight_on(&LCD1604, 1);
 	  //HAL_GPIO_WritePin(EVB_LED_P, EVB_LED, GPIO_PIN_SET);
-	  HAL_Delay(3000);
+	  HAL_Delay(500);
 	  //update_ina3221(&ina3221, &SD13061);
 	  //update_sw3518(&SW35184, &SD13061);
+	  if(env_key1 > 0) { _val_++; env_key1--; }
+	  if(env_key2 > 0) { _val_--; env_key2--; }
+	  if(env_key3 > 0) { _val_=0; env_key3--; }
 	  //update_ath20(&ath20, &SD13061);
 	  update_adc(&hadc1, &SD13061);
 	  lcd_set_backlight_on(&LCD1601, 0); lcd_set_backlight_on(&LCD1602, 0);
 	  lcd_set_backlight_on(&LCD1603, 0); lcd_set_backlight_on(&LCD1604, 0);
 	  //HAL_GPIO_WritePin(EVB_LED_P, EVB_LED, GPIO_PIN_RESET);
-	  HAL_Delay(3000);
+	  HAL_Delay(500);
   }
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
         if(htim == &htim14) {
                 HAL_GPIO_TogglePin(EVB_LED_P, EVB_LED);
-                HAL_GPIO_TogglePin(SPI3SSP, SPI3SS);
-                HAL_GPIO_TogglePin(LCD_RSP, LCD_RS);
+                //HAL_GPIO_TogglePin(LCD_RSP, LCD_RS);
         }
 }
 
+void HAL_GPIO_EXTI_Rising_Callback(uint16_t GPIO_Pin) {
+	switch(GPIO_Pin) {
+	case GPIO_PIN_13: env_key1=1; break;
+	case GPIO_PIN_14: env_key2=1; break;
+	case GPIO_PIN_15: env_key3=1; break;
+	}
+}

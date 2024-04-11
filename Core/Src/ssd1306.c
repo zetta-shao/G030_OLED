@@ -382,6 +382,7 @@ void ssd1306_DrawPixel(struct tSSD1306 *d, uint8_t x, uint8_t y, SSD1306_COLOR c
     } else { 
         d->SSD1306_Buffer[x + (y / 8) * SSD1306_WIDTH] &= ~(1 << (y % 8));
     }
+
 }
 
 /*
@@ -392,11 +393,11 @@ void ssd1306_DrawPixel(struct tSSD1306 *d, uint8_t x, uint8_t y, SSD1306_COLOR c
  */
 char ssd1306_WriteChar(struct tSSD1306 *d, char ch, FontDef Font, SSD1306_COLOR color) {
     uint32_t i, b, j;
-    
+
     // Check if character is valid
     if (ch < 32 || ch > 126)
         return 0;
-    
+
     // Check remaining space on current line
     if (SSD1306_WIDTH < (d->CurrentX + Font.FontWidth) ||
         SSD1306_HEIGHT < (d->CurrentY + Font.FontHeight))
@@ -404,7 +405,7 @@ char ssd1306_WriteChar(struct tSSD1306 *d, char ch, FontDef Font, SSD1306_COLOR 
         // Not enough space on current line
         return 0;
     }
-    
+
     // Use the font to write
     for(i = 0; i < Font.FontHeight; i++) {
         b = Font.data[(ch - 32) * Font.FontHeight + i];
@@ -416,18 +417,47 @@ char ssd1306_WriteChar(struct tSSD1306 *d, char ch, FontDef Font, SSD1306_COLOR 
             }
         }
     }
-    
+
     // The current space is now taken
     d->CurrentX += Font.FontWidth;
-    
+
     // Return written char for validation
+    return ch;
+}
+
+char ssd1306_WriteChar2(struct tSSD1306 *d, char ch, FontDef Font, SSD1306_COLOR color) {
+    uint32_t i, b, j;
+
+    if (ch < 32 || ch > 126) return 0;
+    if (SSD1306_WIDTH < (d->CurrentX + Font.FontWidth) ||
+        SSD1306_HEIGHT < (d->CurrentY + Font.FontHeight)) { return 0; }
+    if(Font.FontWidth <= 8) {
+        uint8_t *px, m;
+        px = ((uint8_t*)Font.data) + ((ch-32)*Font.FontWidth);
+        for(i = 0; i < Font.FontWidth; i++, px++) {
+            for(m=0x80,j=0; j<Font.FontHeight; j++, m>>=1) {
+                ssd1306_DrawPixel(d, d->CurrentX + i, (d->CurrentY + j), (*px & m) ? color : !color);
+            }
+        }
+
+    } else {
+        uint16_t *px, m;
+        px = (uint16_t*)Font.data + ((ch-32)*Font.FontHeight);
+        for(i = 0; i < Font.FontHeight; i++, px++) {
+            for(m=0x8000,j=0; j<Font.FontWidth; j++, m>>=1) {
+                ssd1306_DrawPixel(d, d->CurrentX + j, (d->CurrentY + i), (*px & m) ? color : !color);
+            }
+        }
+    }
+
+    d->CurrentX += Font.FontWidth;
     return ch;
 }
 
 /* Write full string to screenbuffer */
 char ssd1306_WriteString(struct tSSD1306 *d, char* str, FontDef Font, SSD1306_COLOR color) {
     while (*str) {
-        if (ssd1306_WriteChar(d, *str, Font, color) != *str) {
+        if (ssd1306_WriteChar2(d, *str, Font, color) != *str) {
             // Char could not be written
             return *str;
         }

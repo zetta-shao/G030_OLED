@@ -25,17 +25,14 @@ int8_t _val_ = 0;
 swi2c_t si2c1={0}, si2c2={0}, si2c3={0}, si2c4={0};
 swspi_t sspi1={0};
 //swspi_t sspi3={0};
-lcd1602_t LCD1601 = { 0 };
-lcd1602_t LCD1602 = { 0 };
-lcd1602_t LCD1603 = { 0 };
-lcd1602_t LCD1604 = { 0 };
-SSD1306_t SD13061 = { 0 };
+lcd1602_t LCD1601={0}, LCD1602={0}, LCD1603={0}, LCD1604={0};
+SSD1306_t SD13061={0};
 //SSD1306_t SD13062 = { 0 };
 INA3221_t ina3221 = { 0 };
-IP2365_t IP23651 = { 0 }; IP2365_t IP23652 = { 0 };
-sw35xx_t SW35181 = { 0 }; sw35xx_t SW35182 = { 0 };
-sw35xx_t SW35183 = { 0 }; sw35xx_t SW35184 = { 0 };
-ath20t ath20 = { 0 };
+IP2365_t IP23651={0}, IP23652={0};
+sw35xx_t SW35181={0}, SW35182={0}, SW35183={0}, SW35184={0};
+//ath20t ath20 = {0};
+#define deffont Font_5x8
 
 #ifdef  USE_FULL_ASSERT
 void assert_failed(uint8_t *file, uint32_t line) { }
@@ -46,7 +43,7 @@ void update_ina3221(INA3221_t *ina, SSD1306_t *led) {
 
 	  if(ina->pDev == NULL) {
 		  ssd1306_SetCursor(led, 1, 16);
-		  ssd1306_WriteString(led, "no INA3221 delect", Font_6x8, 1);
+		  ssd1306_WriteString(led, "no INA3221 delect", deffont, 1);
 		  return;
 	  }
 
@@ -56,19 +53,19 @@ void update_ina3221(INA3221_t *ina, SSD1306_t *led) {
 	  wI = ina3221_getAvgCur(ina, 1);
 	  sprintf(str, "1:%4ldmV %4ldmA    ", wV, wI);
 	  ssd1306_SetCursor(led, 1, 16);
-	  ssd1306_WriteString(led, str, Font_6x8, 1);
+	  ssd1306_WriteString(led, str, deffont, 1);
 
 	  wV = ina3221_getAvgVol(ina, 2);
 	  wI = ina3221_getAvgCur(ina, 2);
 	  sprintf(str, "2:%4ldmV %4ldmA    ", wV, wI);
 	  ssd1306_SetCursor(led, 1, 24);
-	  ssd1306_WriteString(led, str, Font_6x8, 1);
+	  ssd1306_WriteString(led, str, deffont, 1);
 
 	  wV = ina3221_getAvgVol(ina, 3);
 	  wI = ina3221_getAvgCur(ina, 3);
 	  sprintf(str, "3:%4ldmV %4ldmA    ", wV, wI);
 	  ssd1306_SetCursor(led, 1, 32);
-	  ssd1306_WriteString(led, str, Font_6x8, 1);
+	  ssd1306_WriteString(led, str, deffont, 1);
 
 	  ssd1306_UpdateScreen(led);
 }
@@ -78,28 +75,28 @@ void update_sw3518(sw35xx_t *d, SSD1306_t *led) {
 
 	  if(d->pDev == NULL) {
 		  ssd1306_SetCursor(led, 1, 16);
-		  ssd1306_WriteString(led, "no SW3518 delect", Font_6x8, 1);
+		  ssd1306_WriteString(led, "no SW3518 delect", deffont, 1);
 		  return;
 	  }
 
 	sprintf(str, "SW3518 v:%x", str[63]);
 	ssd1306_SetCursor(led, 0, 16);
-	ssd1306_WriteString(led, str, Font_6x8, 1);
+	ssd1306_WriteString(led, str, deffont, 1);
 
 	SW35xx_readStatus(d, 0);
 	sprintf(str, "PD:%x ST:%x", d->PDVersion, d->fastChargeType);
 	ssd1306_SetCursor(led, 64, 16);
-	ssd1306_WriteString(led, str, Font_6x8, 1);
+	ssd1306_WriteString(led, str, deffont, 1);
 
 	sprintf(str, "i:%4dmV o:%4dmV", d->vin_mV, d->vout_mV);
 	ssd1306_SetCursor(led, 0, 24);
-	ssd1306_WriteString(led, str, Font_6x8, 1);
+	ssd1306_WriteString(led, str, deffont, 1);
 	sprintf(str, "A:%4dmA C:%4dmA", d->iout_usba_mA, d->iout_usbc_mA);
 	ssd1306_SetCursor(led, 0, 32);
-	ssd1306_WriteString(led, str, Font_6x8, 1);
+	ssd1306_WriteString(led, str, deffont, 1);
 	ssd1306_UpdateScreen(led);
 }
-
+#ifdef ath20
 void update_ath20(ath20t *d, SSD1306_t *led) {
 	char str[64];
 	int32_t vH, vT;
@@ -126,7 +123,7 @@ void update_ath20(ath20t *d, SSD1306_t *led) {
 
 	ssd1306_UpdateScreen(led);
 }
-
+#endif
 #define ADV_VREF_PREAMP (4096 * 1210)
 
 void init_adc(ADC_HandleTypeDef *d, SSD1306_t *led) {
@@ -170,9 +167,9 @@ void update_adc(ADC_HandleTypeDef *d, SSD1306_t *led) {
 	//HAL_ADC_Stop(d);
 	//res >>= 2;
 
-	sprintf(str, "chip_vref %ld %ld    ", vref, _val_);
+	sprintf(str, "chip_vref %ld %d    ", vref, _val_);
 	ssd1306_SetCursor(led, 0, 8);
-	ssd1306_WriteString(led, str, Font_6x8, 1);
+	ssd1306_WriteString(led, str, deffont, 1);
 	ssd1306_UpdateScreen(led);
 
 	//sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
@@ -186,28 +183,26 @@ void update_adc(ADC_HandleTypeDef *d, SSD1306_t *led) {
 
 	sprintf(str, "chip_temp %ld %ld    ", idx, res);
 	ssd1306_SetCursor(led, 0, 0);
-	ssd1306_WriteString(led, str, Font_6x8, 1);
+	ssd1306_WriteString(led, str, deffont, 1);
 	ssd1306_UpdateScreen(led);
 }
 
 void update_devices(SSD1306_t *led) {
+#if 0
 	char str[64];
-
 	sprintf(str, "lcd 1:%d 2:%d 3:%d 4:%d", (LCD1601.d)?1:0, (LCD1602.d)?1:0, (LCD1603.d)?1:0, (LCD1604.d)?1:0);
 	ssd1306_SetCursor(led, 0, 16);
-	ssd1306_WriteString(led, str, Font_6x8, 1);
+	ssd1306_WriteString(led, str, deffont, 1);
 	ssd1306_UpdateScreen(led);
-
-	sprintf(str, "ip2 1:%d 2:%d t:%d i:%d", (IP23651.pD)?1:0, (IP23652.pD)?1:0, (ath20.pDev)?1:0, (ina3221.pDev)?1:0);
+	sprintf(str, "ip2 1:%d 2:%d i:%d    ", (IP23651.pD)?1:0, (IP23652.pD)?1:0, (ina3221.pDev)?1:0);
 	ssd1306_SetCursor(led, 0, 24);
-	ssd1306_WriteString(led, str, Font_6x8, 1);
+	ssd1306_WriteString(led, str, deffont, 1);
 	ssd1306_UpdateScreen(led);
-
 	sprintf(str, "sw3 1:%d 2:%d 3:%d 4:%d", (SW35181.pDev)?1:0, (SW35182.pDev)?1:0, (SW35183.pDev)?1:0, (SW35184.pDev)?1:0);
 	ssd1306_SetCursor(led, 0, 32);
-	ssd1306_WriteString(led, str, Font_6x8, 1);
+	ssd1306_WriteString(led, str, deffont, 1);
 	ssd1306_UpdateScreen(led);
-
+#endif
 }
 
 int main(void) {
@@ -292,9 +287,9 @@ int main(void) {
 #endif
 #if 0
   ssd1306_SetCursor(&SD13062, 1, 0);
-  ssd1306_WriteString(&SD13062, "font6x8", Font_6x8, 1);
+  ssd1306_WriteString(&SD13062, "font6x8", deffont, 1);
   ssd1306_SetCursor(&SD13062, 65, 0);
-  ssd1306_WriteString(&SD13062, "font6x8", Font_6x8, 0);
+  ssd1306_WriteString(&SD13062, "font6x8", deffont, 0);
   ssd1306_UpdateScreen(&SD13062);
 #endif
 #if 0

@@ -20,6 +20,10 @@
 //#define STM32F7
 #define STM32G0
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 // Choose a bus
 //#define SSD1306_USE_I2C
 #define SSD1306_USE_SPI
@@ -45,8 +49,10 @@
 // # define SSD1306_INVERSE_COLOR
 
 // Include only needed fonts
-#define SSD1306_INCLUDE_FONT_6x8
-#define SSD1306_INCLUDE_FONT_7x10
+//#define SSD1306_INCLUDE_FONT_5x7
+#define SSD1306_INCLUDE_FONT_5x8
+//#define SSD1306_INCLUDE_FONT16_6x8
+//#define SSD1306_INCLUDE_FONT_7x10
 //#define SSD1306_INCLUDE_FONT_11x18
 //#define SSD1306_INCLUDE_FONT_16x26
 
@@ -64,5 +70,9 @@
 // The height can be changed as well if necessary.
 // It can be 32, 64 or 128. The default value is 64.
 #define SSD1306_HEIGHT          64
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __SSD1306_CONF_H__ */

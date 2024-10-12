@@ -8,14 +8,14 @@
 #ifndef __SSD1306_H__
 #define __SSD1306_H__
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 //#include <stddef.h>
 #include <stdint.h>
 //#include <_ansi.h>
 #include "ssd1306_conf.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #if defined(STM32F0)
 #include "stm32f0xx_hal.h"
@@ -56,7 +56,7 @@ extern "C" {
 
 #define SPI_3PIN 1
 
-#include "ssd1306_fonts.h"
+#include "lcd_fonts.h"
 
 /* vvv I2C config vvv */
 
@@ -71,6 +71,11 @@ extern "C" {
 /* ^^^ I2C config ^^^ */
 /* vvv SPI config vvv */
 /* ^^^ SPI config ^^^ */
+
+#ifdef _M_AMD64
+typedef void* I2C_HandleTypeDef;
+typedef void* SPI_HandleTypeDef;
+#endif
 
 #if defined(SSD1306_USE_I2C)
 #include "swi2c.h"
@@ -96,7 +101,7 @@ extern SPI_HandleTypeDef SSD1306_SPI_PORT;
 #define SSD1306_BUFFER_SIZE   SSD1306_WIDTH * SSD1306_HEIGHT / 8
 #endif
 
-typedef stm32_gpio_t ssd1306_gpio_t; //change for other MCU
+typedef swgpio_t ssd1306_gpio_t; //change for other MCU
 //typedef amd64_gpio_t ssd1306_gpio_t; //change for other MCU
 
 // Enumeration for screen colors
@@ -112,13 +117,12 @@ typedef enum {
 
 // Struct to store transformations
 typedef struct tSSD1306 {
-	uint16_t 	CurrentX;
-	uint16_t 	CurrentY;
-	uint8_t 	flag;
+	lcddev_t	d;
+	uint8_t		hwflag;
 	uint8_t		i2c_addr;
-	ssd1306_gpio_t	DC;
-	ssd1306_gpio_t	CS;
-	ssd1306_gpio_t	RST;
+    swgpio_t	DC;
+    swgpio_t	CS;
+    swgpio_t	RST;
 	//swspi_t		*pSPI;
 #if defined(SSD1306_USE_I2C)
 	//struct __I2C_HandleTypeDef *pDev;
@@ -127,19 +131,10 @@ typedef struct tSSD1306 {
 	//struct __SPI_HandleTypeDef *pDev;
 	swspi_t		*pDev;
 #endif
-	//void*		DC_PORT;
-	//void*		CS_PORT;
-	//void*		RST_PORT;
-	//void*		CLK_PORT;
-	//void*		DATA_PORT;
-	//uint16_t	dc_pin;
-	//uint16_t	cs_pin;
-	//uint16_t	rst_pin;
-	//uint16_t	clk_pin;
-	//uint16_t	dta_pin;
-	//uint16_t		rsv1;
 	uint8_t		SSD1306_Buffer[SSD1306_BUFFER_SIZE];
 } SSD1306_t;
+
+#define ssd1306_t SSD1306_t
 
 typedef struct {
     uint8_t x;
@@ -160,19 +155,21 @@ void SSD1306_gpioinitSW(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* 
 
 //void SSD1306_gpioinit(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin, void* RSTport, uint16_t RSTpin, void* SWCLKport, uint16_t SWCLKpin, void* SWDATAport, uint16_t SWDATApin);
 //void SSD1306_gpioinit5W(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin, void* RSTport, uint16_t RSTpin);
-void SSD1306_gpioinit5W2(struct tSSD1306 *d, ssd1306_gpio_t *CS, ssd1306_gpio_t *DC, ssd1306_gpio_t *RST);
+void SSD1306_gpioinit5W2(struct tSSD1306 *d, swgpio_t *CS, swgpio_t *DC, swgpio_t *RST);
 //void SSD1306_gpioinit4W(struct tSSD1306 *d, void* CSport, uint16_t CSpin, void* DCport, uint16_t DCpin);
-void SSD1306_gpioinit4W2(struct tSSD1306 *d, ssd1306_gpio_t *CS, ssd1306_gpio_t *DC);
+void SSD1306_gpioinit4W2(struct tSSD1306 *d, swgpio_t *CS, swgpio_t *DC);
 //void SSD1306_gpioinit3W(struct tSSD1306 *d, void* CSport, uint16_t CSpin);
-void SSD1306_gpioinit3W2(struct tSSD1306 *d, ssd1306_gpio_t *CS);
-void SSD1306_Init(struct tSSD1306 *d, void *pvport);
+void SSD1306_gpioinit3W2(struct tSSD1306 *d, swgpio_t *CS);
+void SSD1306_init(struct tSSD1306 *d, void *pvport, void *pvFontDef);
 void SH1106_Init(struct tSSD1306 *d, void *pvport);
 void ssd1306_Fill(struct tSSD1306 *d, SSD1306_COLOR color);
-void ssd1306_UpdateScreen(struct tSSD1306 *d);
-void ssd1306_DrawPixel(struct tSSD1306 *d, uint8_t x, uint8_t y, SSD1306_COLOR color);
-char ssd1306_WriteChar(struct tSSD1306 *d, char ch, FontDef Font, SSD1306_COLOR color);
-char ssd1306_WriteString(struct tSSD1306 *d, char* str, FontDef Font, SSD1306_COLOR color);
-void ssd1306_SetCursor(struct tSSD1306 *d, uint8_t x, uint8_t y);
+//void ssd1306_UpdateScreen(struct tSSD1306 *d);
+void ssd1306_update(lcddev_t *d);
+//void ssd1306_DrawPixel(struct tSSD1306 *d, uint8_t x, uint8_t y, SSD1306_COLOR color);
+//char ssd1306_WriteChar(struct tSSD1306 *d, char ch, FontDef Font, SSD1306_COLOR color);
+//char ssd1306_WriteString(struct tSSD1306 *d, char* str, FontDef Font, SSD1306_COLOR color);
+//void ssd1306_SetCursor(struct tSSD1306 *d, uint8_t x, uint8_t y);
+#if 0
 void ssd1306_Line(struct tSSD1306 *d, uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color);
 void ssd1306_DrawArc(struct tSSD1306 *d, uint8_t x, uint8_t y, uint8_t radius, uint16_t start_angle, uint16_t sweep, SSD1306_COLOR color);
 void ssd1306_DrawArcWithRadiusLine(struct tSSD1306 *d, uint8_t x, uint8_t y, uint8_t radius, uint16_t start_angle, uint16_t sweep, SSD1306_COLOR color);
@@ -182,7 +179,7 @@ void ssd1306_Polyline(struct tSSD1306 *d, const SSD1306_VERTEX *par_vertex, uint
 void ssd1306_DrawRectangle(struct tSSD1306 *d, uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color);
 void ssd1306_FillRectangle(struct tSSD1306 *d, uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, SSD1306_COLOR color);
 void ssd1306_DrawBitmap(struct tSSD1306 *d, uint8_t x, uint8_t y, const unsigned char* bitmap, uint8_t w, uint8_t h, SSD1306_COLOR color);
-
+#endif
 /**
  * @brief Sets the contrast of the display.
  * @param[in] value contrast to set.

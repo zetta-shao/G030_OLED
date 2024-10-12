@@ -1,5 +1,8 @@
 #ifndef _INA3221_H_
 #define _INA3221_H_
+#ifdef __cplusplus
+extern "C" {
+#endif
 //#include "Arduino.h"
 //#include "Wire.h"
 #include "swi2c.h"
@@ -25,9 +28,9 @@
     INA3221_CH_NUM
 } ina3221_ch_t;*/
 
-#define INA3221_CH1		1
-#define INA3221_CH2		2
-#define INA3221_CH3		3
+#define INA3221_CH1		0 //1
+#define INA3221_CH2		1 //2
+#define INA3221_CH3		2 //3
 #define INA3221_CH_NUM	3
 
 // Registers
@@ -157,200 +160,208 @@ typedef union {
 // got minimal resolution = 40 / (8/2) = 10uV. minimal current resolution is 10uV / 100mOhm = 0.0001(A)=0.1mA
 
 #define INA3221_AVGVAL 1
-#define VolTabNum 16
-#define CurTabNum 2
+#define VolTabNum 8
+#define CurTabNum 4
 #define ScaleShift 1 // div by 2
 
-typedef struct tAvgVal {
+typedef struct AvgVal_t AvgVal_t;
+typedef struct ina3221_t ina3221_t;
+
+struct AvgVal_t {
 	int32_t		VolAvg;
 	int32_t		CurAvg;
 	int16_t		VolTab[VolTabNum];
 	int16_t		CurTab[CurTabNum];
 	int16_t		vidx, cidx;
-} AvgVal_t;
+};
 
-typedef struct t_INA3221 {
+struct ina3221_t {
 	swi2c_t	*pDev;
 	uint16_t	_i2c_addr;
     // Value of Mask/Enable register.
 	masken_reg_t 	_masken_reg; //uint16_t
     // Shunt resistance in mOhm
-	uint32_t	_shuntRes[INA3221_CH_NUM];
+	int32_t	_shuntRes[INA3221_CH_NUM];
     // Series filter resistance in Ohm
-	uint32_t	_filterRes[INA3221_CH_NUM];
+	int32_t	_filterRes[INA3221_CH_NUM];
 	int32_t		voltage[3];
 	int32_t		curcuit[3];
 	int32_t		power[3];
 #ifdef INA3221_AVGVAL
 	AvgVal_t		avg[3];
 #endif
-} INA3221_t;
+};
 
 	// Reads 16 bytes from a register.
-	void ina3221_read(struct t_INA3221 *d, uint16_t reg, uint16_t *val);
+	void ina3221_read(ina3221_t *d, uint16_t reg, uint16_t *val);
 
 	// Writes 16 bytes to a register.
-	void ina3221_write(struct t_INA3221 *d, uint16_t reg, uint16_t *val);
+	void ina3221_write(ina3221_t *d, uint16_t reg, uint16_t *val);
+
+	uint8_t ina3221_detect(ina3221_t *d, struct tag_swi2c *pvDev);
 
 	// Initializes INA3221
-	uint8_t ina3221_begin(struct t_INA3221 *d, struct tag_swi2c *pvDev);
+	uint8_t ina3221_init(ina3221_t *d, struct tag_swi2c *pvDev);
 
 	// Sets shunt resistor value in mOhm
-	void ina3221_setShuntRes(struct t_INA3221 *d, uint32_t res_ch1, uint32_t res_ch2, uint32_t res_ch3);
+	void ina3221_setShuntRes(ina3221_t *d, uint32_t res_ch1, uint32_t res_ch2, uint32_t res_ch3);
 
 	// Sets filter resistors value in Ohm
-	void ina3221_setFilterRes(struct t_INA3221 *d, uint32_t res_ch1, uint32_t res_ch2, uint32_t res_ch3);
+	void ina3221_setFilterRes(ina3221_t *d, uint32_t res_ch1, uint32_t res_ch2, uint32_t res_ch3);
 
 	// Gets a register value.
-	uint16_t ina3221_getReg(struct t_INA3221 *d, uint16_t reg);
+	uint16_t ina3221_getReg(ina3221_t *d, uint16_t reg);
 
 	// Resets INA3221
-	void ina3221_reset(struct t_INA3221 *d);
+	void ina3221_reset(ina3221_t *d);
 
 	// Sets operating mode to power-down
-	void ina3221_setModePowerDown(struct t_INA3221 *d);
+	void ina3221_setModePowerDown(ina3221_t *d);
 
 	// Sets operating mode to continious
-	void ina3221_setModeContinious(struct t_INA3221 *d);
+	void ina3221_setModeContinious(ina3221_t *d);
 
 	// Sets operating mode to triggered (single-shot)
-	void ina3221_setModeTriggered(struct t_INA3221 *d);
+	void ina3221_setModeTriggered(ina3221_t *d);
 
 	// Enables shunt-voltage measurement
-	void ina3221_setShuntMeasEnable(struct t_INA3221 *d);
+	void ina3221_setShuntMeasEnable(ina3221_t *d);
 
 	// Disables shunt-voltage mesurement
-	void ina3221_setShuntMeasDisable(struct t_INA3221 *d);
+	void ina3221_setShuntMeasDisable(ina3221_t *d);
 
 	// Enables bus-voltage measurement
-	void ina3221_setBusMeasEnable(struct t_INA3221 *d);
+	void ina3221_setBusMeasEnable(ina3221_t *d);
 
 	// Disables bus-voltage measureement
-	void ina3221_setBusMeasDisable(struct t_INA3221 *d);
+	void ina3221_setBusMeasDisable(ina3221_t *d);
 
 	// Sets averaging mode. Sets number of samples that are collected
 	// and averaged togehter.
-	void ina3221_setAveragingMode(struct t_INA3221 *d, ina3221_avg_mode_t mode);
+	void ina3221_setAveragingMode(ina3221_t *d, ina3221_avg_mode_t mode);
 
 	// Sets bus-voltage conversion time.
-	void ina3221_setBusConversionTime(struct t_INA3221 *d, ina3221_conv_time_t convTime);
+	void ina3221_setBusConversionTime(ina3221_t *d, ina3221_conv_time_t convTime);
 
 	// Sets shunt-voltage conversion time.
-	void ina3221_setShuntConversionTime(struct t_INA3221 *d, ina3221_conv_time_t convTime);
+	void ina3221_setShuntConversionTime(ina3221_t *d, ina3221_conv_time_t convTime);
 
 	// Sets power-valid upper-limit voltage. The power-valid condition
 	// is reached when all bus-voltage channels exceed the value set.
 	// When the powervalid condition is met, the PV alert pin asserts high.
-	void ina3221_setPwrValidUpLimit(struct t_INA3221 *d, int16_t voltagemV);
+	void ina3221_setPwrValidUpLimit(ina3221_t *d, int16_t voltagemV);
 
 	// Sets power-valid lower-limit voltage. If any bus-voltage channel drops
 	// below the power-valid lower-limit, the PV alert pin pulls low.
-	void ina3221_setPwrValidLowLimit(struct t_INA3221 *d, int16_t voltagemV);
+	void ina3221_setPwrValidLowLimit(ina3221_t *d, int16_t voltagemV);
 
 	// Sets the value that is compared to the Shunt-Voltage Sum register value
 	// following each completed cycle of all selected channels to detect
 	// for system overcurrent events.
-	void ina3221_setShuntSumAlertLimit(struct t_INA3221 *d, int32_t voltagemV);
+	void ina3221_setShuntSumAlertLimit(ina3221_t *d, int32_t voltagemV);
 
 	// Sets the current value that is compared to the sum all currents.
 	// This function is a helper for setShuntSumAlertLim(). It onverts current
 	// value to shunt voltage value.
-	void ina3221_setCurrentSumAlertLimit(struct t_INA3221 *d, int32_t currentmA);
+	void ina3221_setCurrentSumAlertLimit(ina3221_t *d, int32_t currentmA);
 
 	// Enables warning alert latch.
-	void ina3221_setWarnAlertLatchEnable(struct t_INA3221 *d);
+	void ina3221_setWarnAlertLatchEnable(ina3221_t *d);
 
 	// Disables warning alert latch.
-	void ina3221_setWarnAlertLatchDisable(struct t_INA3221 *d);
+	void ina3221_setWarnAlertLatchDisable(ina3221_t *d);
 
 	// Enables critical alert latch.
-	void ina3221_setCritAlertLatchEnable(struct t_INA3221 *d);
+	void ina3221_setCritAlertLatchEnable(ina3221_t *d);
 
 	// Disables critical alert latch.
-	void ina3221_setCritAlertLatchDisable(struct t_INA3221 *d);
+	void ina3221_setCritAlertLatchDisable(ina3221_t *d);
 
 	// Reads flags from Mask/Enable register.
 	// When Mask/Enable register is read, flags are cleared.
 	// Use getTimingCtrlAlertFlag(), getPwrValidAlertFlag(),
 	// getCurrentSumAlertFlag() and getConvReadyFlag() to get flags after
 	// readFlags() is called.
-	void ina3221_readFlags(struct t_INA3221 *d);
+	void ina3221_readFlags(ina3221_t *d);
 
 	// Gets timing-control-alert flag indicator.
-	uint8_t ina3221_getTimingCtrlAlertFlag(struct t_INA3221 *d);
+	uint8_t ina3221_getTimingCtrlAlertFlag(ina3221_t *d);
 
 	// Gets power-valid-alert flag indicator.
-	uint8_t ina3221_getPwrValidAlertFlag(struct t_INA3221 *d);
+	uint8_t ina3221_getPwrValidAlertFlag(ina3221_t *d);
 
 	// Gets summation-alert flag indicator.
-	uint8_t ina3221_getCurrentSumAlertFlag(struct t_INA3221 *d);
+	uint8_t ina3221_getCurrentSumAlertFlag(ina3221_t *d);
 
 	// Gets Conversion-ready flag.
-	uint8_t ina3221_getConversionReadyFlag(struct t_INA3221 *d);
+	uint8_t ina3221_getConversionReadyFlag(ina3221_t *d);
 
 	// Gets manufacturer ID.
 	// Should read 0x5449.
-	uint16_t ina3221_getManufID(struct t_INA3221 *d);
+	uint16_t ina3221_getManufID(ina3221_t *d);
 
 	// Gets die ID.
 	// Should read 0x3220.
-	uint16_t ina3221_getDieID(struct t_INA3221 *d);
+	uint16_t ina3221_getDieID(ina3221_t *d);
 
 	// Enables channel measurements
-	void ina3221_setChannelEnable(struct t_INA3221 *d, uint8_t channel);
+	void ina3221_setChannelEnable(ina3221_t *d, uint8_t channel);
 
 	// Disables channel measurements
-	void ina3221_setChannelDisable(struct t_INA3221 *d, uint8_t channel);
+	void ina3221_setChannelDisable(ina3221_t *d, uint8_t channel);
 
 	// Sets warning alert shunt voltage limit
-	void ina3221_setWarnAlertShuntLimit(struct t_INA3221 *d, uint8_t channel, int32_t voltageuV);
+	void ina3221_setWarnAlertShuntLimit(ina3221_t *d, uint8_t channel, int32_t voltageuV);
 
 	// Sets critical alert shunt voltage limit
-	void ina3221_setCritAlertShuntLimit(struct t_INA3221 *d, uint8_t channel, int32_t voltageuV);
+	void ina3221_setCritAlertShuntLimit(ina3221_t *d, uint8_t channel, int32_t voltageuV);
 
 	// Sets warning alert current limit
-	void ina3221_setWarnAlertCurrentLimit(struct t_INA3221 *d, uint8_t channel, int32_t currentmA);
+	void ina3221_setWarnAlertCurrentLimit(ina3221_t *d, uint8_t channel, int32_t currentmA);
 
 	// Sets critical alert current limit
-	void ina3221_setCritAlertCurrentLimit(struct t_INA3221 *d, uint8_t channel, int32_t currentmA);
+	void ina3221_setCritAlertCurrentLimit(ina3221_t *d, uint8_t channel, int32_t currentmA);
 
 	// Includes channel to fill Shunt-Voltage Sum register.
-	void ina3221_setCurrentSumEnable(struct t_INA3221 *d, uint8_t channel);
+	void ina3221_setCurrentSumEnable(ina3221_t *d, uint8_t channel);
 
 	// Excludes channel from filling Shunt-Voltage Sum register.
-	void ina3221_setCurrentSumDisable(struct t_INA3221 *d, uint8_t channel);
+	void ina3221_setCurrentSumDisable(ina3221_t *d, uint8_t channel);
 
 	// Gets shunt voltage in uV.
-	int32_t ina3221_getShuntVoltage(struct t_INA3221 *d, uint8_t channel);
+	int32_t ina3221_getShuntVoltage(ina3221_t *d, uint8_t channel);
 
 	// Gets warning alert flag.
-	uint8_t ina3221_getWarnAlertFlag(struct t_INA3221 *d, uint8_t channel);
+	uint8_t ina3221_getWarnAlertFlag(ina3221_t *d, uint8_t channel);
 
 	// Gets critical alert flag.
-	uint8_t ina3221_getCritAlertFlag(struct t_INA3221 *d, uint8_t channel);
+	uint8_t ina3221_getCritAlertFlag(ina3221_t *d, uint8_t channel);
 
 	// Estimates offset voltage added by the series filter resitors
-	int32_t ina3221_estimateOffsetVoltage(struct t_INA3221 *d, uint8_t channel, uint32_t busVoltage);
+	int32_t ina3221_estimateOffsetVoltage(ina3221_t *d, uint8_t channel, uint32_t busVoltage);
 
 	// Gets current in A.
-	float ina3221_getCurrent(struct t_INA3221 *d, uint8_t channel);
+	float ina3221_getCurrent(ina3221_t *d, uint8_t channel);
 
-	int16_t ina3221_getVol_Raw(struct t_INA3221 *d, uint8_t channel);
+	int16_t ina3221_getVol_Raw(ina3221_t *d, uint8_t channel);
 
 	// Gets current compensated with calculated offset voltage.
-	float ina3221_getCurrentCompensated(struct t_INA3221 *d, uint8_t channel);
+	float ina3221_getCurrentCompensated(ina3221_t *d, uint8_t channel);
 
 	// Gets bus voltage in V.
-	float ina3221_getVoltage(struct t_INA3221 *d, uint8_t channel);
+	float ina3221_getVoltage(ina3221_t *d, uint8_t channel);
 
-	int16_t ina3221_getShuntVolRaw(struct t_INA3221 *d, uint8_t channel);
+	int16_t ina3221_getShuntVolRaw(ina3221_t *d, uint8_t channel);
 #define ina3221_getVol_mV ina3221_getVol_Raw
 
-	int16_t ina3221_getCur_mA(struct t_INA3221 *d, uint8_t channel);
+	int16_t ina3221_getCur_mA(ina3221_t *d, uint8_t channel);
 #if INA3221_AVGVAL
-	int32_t ina3221_getAvgVol(struct t_INA3221 *d, uint8_t channel); //mV
-	int32_t ina3221_getAvgCur(struct t_INA3221 *d, uint8_t channel);
+	int32_t ina3221_getAvgVol(ina3221_t *d, uint8_t channel); //mV
+	int32_t ina3221_getAvgCur(ina3221_t *d, uint8_t channel);
 #endif
-	int32_t ina3221_getCurPower(struct t_INA3221 *d, uint8_t channel);
+	int32_t ina3221_getCurPower(ina3221_t *d, uint8_t channel);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

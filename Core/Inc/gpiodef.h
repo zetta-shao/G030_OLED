@@ -7,16 +7,41 @@
 
 #ifndef INC_GPIODEF_H_
 #define INC_GPIODEF_H_
-#include "stm32g0xx_hal.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef _M_AMD64
+#include <stdint.h>
+void HAL_Delay(uint32_t mS);
+typedef struct swgpio_t swgpio_t;
+struct swgpio_t {
+        void    *port;
+        uint16_t pin;
+};
+#else
+	#define STM32
+#endif
+
+#ifdef STM32
+#include "stm32g0xx_hal.h"
+typedef struct swgpio_t swgpio_t;
+struct swgpio_t {
+        void    *port;
+        uint16_t pin;
+};
+#endif
+
+#ifdef STM32
 #define HI2C1L		GPIO_PIN_8	//1
 #define HI2C1A		GPIO_PIN_9	//2
 #define HI2C1P		GPIOB
 #define HI2C2L		GPIO_PIN_11	//16 //PA11/PA9
 #define HI2C2A		GPIO_PIN_12	//17 //PA12/PA10
 #define HI2C2P		GPIOA
-#define SPI1L		GPIO_PIN_5	//12
-#define SPI1O		GPIO_PIN_7	//14
+#define SPI1L		GPIO_PIN_5	//12 // SPI1 CLK
+#define SPI1O		GPIO_PIN_7	//14 // SPI1 MOSI
 #define SPI1P		GPIOA
 #define TIM3C1		GPIO_PIN_3	//20 //PB3/PB4/PB5/PB6
 #define TIM3P		GPIOB
@@ -38,9 +63,9 @@
 #define EVB_LED		GPIO_PIN_8	//15
 #define EVB_LED2	GPIO_PIN_4	//11
 #define EVB_LED_P	GPIOA	//15
-#define SPI3CLK		GPIO_PIN_6
+#define SPI3CLK		GPIO_PIN_6	//13
 #define SPI3CLKP	GPIOA
-#define SPI3MOSI	GPIO_PIN_8
+#define SPI3MOSI	GPIO_PIN_8	//15
 #define SPI3MOP		GPIOA
 #define SPI3SS		GPIO_PIN_3	//20
 #define SPI3SSP		GPIOB
@@ -63,10 +88,6 @@
 #define	DEV_SW35183		(1 << 6)
 #define	DEV_SW35184		(1 << 7)
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 extern I2C_HandleTypeDef hi2c1;
 extern I2C_HandleTypeDef hi2c2;
 extern SPI_HandleTypeDef hspi1;
@@ -80,11 +101,6 @@ void Error_Handler(void);
 void GPIOinit(void);
 void SI2cInit_stm32(void *pvswI2Ct, void* dwSDAport, void* swSCLport, uint8_t bSDApin, uint8_t bSCLpin);
 
-typedef struct t_stm32_gpio {
-	void	*port;
-	uint16_t pin;
-} stm32_gpio_t;
-
 #define STM32_SYSTICK_LOAD (SystemCoreClock/1000000U)
 #define STM32_SYSTICK_DELAY_CALIB (STM32_SYSTICK_LOAD >> 1)
  
@@ -96,7 +112,7 @@ typedef struct t_stm32_gpio {
     } while (0)
 
 #define STM32_DELAY_MS(ms) HAL_Delay(ms)
-
+#endif
 #ifdef __cplusplus
 }
 #endif

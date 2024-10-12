@@ -10,19 +10,21 @@
 #endif
 
 //swi2c_t *__4delay__ = NULL;
-void __HAL_init_i2c__(swi2c_t *d, i2c_gpio_t *CLK, i2c_gpio_t *DATA);
+void __HAL_init_i2c__(swi2c_t *d, swgpio_t *CLK, swgpio_t *DATA);
 
 // sw_i2c 初始化
 //void swi2c_initial(swi2c_t *d) { if (!d) return; d->hal_init(d); }
 
 //void swi2c_SWinit(swi2c_t *d, void* SCLport, uint16_t SCLpin, void* SDAport, uint16_t SDApin) {
-void swi2c_SWinit(swi2c_t *d, i2c_gpio_t *CLK, i2c_gpio_t *DATA) {
+void swi2c_SWinit(swi2c_t *d, swgpio_t *CLK, swgpio_t *DATA) {
 	if(!d) return;
     __HAL_init_i2c__(d, CLK, DATA);
 }
 
 void swi2c_HWinit(swi2c_t *d, void *hWND) {
-	swi2c_SWinit(d, NULL, (i2c_gpio_t *)hWND);
+	//swi2c_SWinit(d, NULL, (swgpio_t *)hWND);
+	if(!d) return;
+    __HAL_init_i2c__(d, NULL, (swgpio_t*)hWND);
 }
 
 static void sda_out(swi2c_t *d, uint8_t out) {
@@ -286,14 +288,14 @@ void swi2c_dummy_clock(swi2c_t *d) {
 
 //__weak void swi2c_delay_us(uint32_t time) { }
 //__weak void swi2c_delay_ms(uint32_t time) { }
-void swi2c_setgpo(swi2c_t *d, i2c_gpio_t *gpiogrp, uint8_t val) {
+void swi2c_setgpo(swi2c_t *d, swgpio_t *gpiogrp, uint8_t val) {
 	//if(!d || !gpiogrp) return;
 	if(!gpiogrp->port || gpiogrp->pin==65535) return;
 	if(val) d->hal_io_ctl(IOCTL_SWI2C_SET_GPIO_HIGH, gpiogrp);
 	else d->hal_io_ctl(IOCTL_SWI2C_SET_GPIO_LOW, gpiogrp);
 }
 
-uint8_t swi2c_getgpi(swi2c_t *d, i2c_gpio_t *gpiogrp) {
+uint8_t swi2c_getgpi(swi2c_t *d, swgpio_t *gpiogrp) {
 	//if(!d || !gpiogrp) return 255;
 	if(!gpiogrp->port || gpiogrp->pin==65535) return 0;
 	return d->hal_io_ctl(IOCTL_SWI2C_GET_GPIO_LEVEL, gpiogrp);

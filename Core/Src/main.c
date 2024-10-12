@@ -10,6 +10,8 @@
 #include "sw35xx_s.h"
 #include "ath20.h"
 
+#define LCD_SSD1306
+
 I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c2;
 SPI_HandleTypeDef hspi1;
@@ -25,76 +27,87 @@ int8_t _val_ = 0;
 swi2c_t si2c1={0}, si2c2={0}, si2c3={0}, si2c4={0};
 swspi_t sspi1={0};
 //swspi_t sspi3={0};
+lcddev_t *gp_lcd;
+#ifdef LCD1602
 lcd1602_t LCD1601={0}, LCD1602={0}, LCD1603={0}, LCD1604={0};
-SSD1306_t SD13061={0};
+#endif
+#ifdef LCD_SSD1306
+ssd1306_t gt_lcd={0};
+#endif
+#ifdef LCD_ST7920
+st7920_t gt_lcd={0};
+#endif
 //SSD1306_t SD13062 = { 0 };
-INA3221_t ina3221 = { 0 };
+ina3221_t ina3221 = { 0 };
 IP2365_t IP23651={0}, IP23652={0};
 sw35xx_t SW35181={0}, SW35182={0}, SW35183={0}, SW35184={0};
 //ath20t ath20 = {0};
-#define deffont Font_5x8
+#define deffont Font_6x8
 
 #ifdef  USE_FULL_ASSERT
 void assert_failed(uint8_t *file, uint32_t line) { }
 #endif /* USE_FULL_ASSERT */
-void update_ina3221(INA3221_t *ina, SSD1306_t *led) {
+void update_ina3221(ina3221_t *ina, lcddev_t *lcd) {
 	  char str[64];
 	  int32_t wV,wI;
 
-	  if(ina->pDev == NULL) {
-		  ssd1306_SetCursor(led, 1, 16);
-		  ssd1306_WriteString(led, "no INA3221 delect", deffont, 1);
-		  return;
-	  }
+	if(!ina || !lcd) return;
+	if(ina->pDev == NULL) {
+		fontdraw_setpos(lcd, 1, 16);
+		fontdraw_string(lcd, "no INA3221 delect");
+		return;
+	}
 
 	  //wV = ina3221_getVol_mV(ina, 1); //mV
 	  wV = ina3221_getAvgVol(ina, 1);
 	  //wI = ina3221_getCur_mA(ina, 1);
 	  wI = ina3221_getAvgCur(ina, 1);
 	  sprintf(str, "1:%4ldmV %4ldmA    ", wV, wI);
-	  ssd1306_SetCursor(led, 1, 16);
-	  ssd1306_WriteString(led, str, deffont, 1);
+	  fontdraw_setpos(lcd, 0, 16);
+	  fontdraw_string(lcd, str);
 
 	  wV = ina3221_getAvgVol(ina, 2);
 	  wI = ina3221_getAvgCur(ina, 2);
 	  sprintf(str, "2:%4ldmV %4ldmA    ", wV, wI);
-	  ssd1306_SetCursor(led, 1, 24);
-	  ssd1306_WriteString(led, str, deffont, 1);
+	  fontdraw_setpos(lcd, 0, 24);
+	  fontdraw_string(lcd, str);
 
 	  wV = ina3221_getAvgVol(ina, 3);
 	  wI = ina3221_getAvgCur(ina, 3);
 	  sprintf(str, "3:%4ldmV %4ldmA    ", wV, wI);
-	  ssd1306_SetCursor(led, 1, 32);
-	  ssd1306_WriteString(led, str, deffont, 1);
+	  fontdraw_setpos(lcd, 0, 32);
+	  fontdraw_string(lcd, str);
 
-	  ssd1306_UpdateScreen(led);
+	  lcd->update(lcd);
 }
-void update_sw3518(sw35xx_t *d, SSD1306_t *led) {
+void update_sw3518(sw35xx_t *d, lcddev_t *lcd) {
 	char str[64];
+	if(!d || !lcd) return;
 	str[63] = sw35xx_version(d);
 
 	  if(d->pDev == NULL) {
-		  ssd1306_SetCursor(led, 1, 16);
-		  ssd1306_WriteString(led, "no SW3518 delect", deffont, 1);
+			fontdraw_setpos(lcd, 1, 16);
+			fontdraw_string(lcd, "no SW3518 delect");
 		  return;
 	  }
 
 	sprintf(str, "SW3518 v:%x", str[63]);
-	ssd1306_SetCursor(led, 0, 16);
-	ssd1306_WriteString(led, str, deffont, 1);
+	fontdraw_setpos(lcd, 0, 16);
+	fontdraw_string(lcd, str);
 
 	SW35xx_readStatus(d, 0);
 	sprintf(str, "PD:%x ST:%x", d->PDVersion, d->fastChargeType);
-	ssd1306_SetCursor(led, 64, 16);
-	ssd1306_WriteString(led, str, deffont, 1);
+	fontdraw_setpos(lcd, 64, 16);
+	fontdraw_string(lcd, str);
 
 	sprintf(str, "i:%4dmV o:%4dmV", d->vin_mV, d->vout_mV);
-	ssd1306_SetCursor(led, 0, 24);
-	ssd1306_WriteString(led, str, deffont, 1);
+	fontdraw_setpos(lcd, 0, 24);
+	fontdraw_string(lcd, str);
 	sprintf(str, "A:%4dmA C:%4dmA", d->iout_usba_mA, d->iout_usbc_mA);
-	ssd1306_SetCursor(led, 0, 32);
-	ssd1306_WriteString(led, str, deffont, 1);
-	ssd1306_UpdateScreen(led);
+	fontdraw_setpos(lcd, 0, 32);
+	fontdraw_string(lcd, str);
+
+	lcd->update(lcd);
 }
 #ifdef ath20
 void update_ath20(ath20t *d, SSD1306_t *led) {
@@ -124,9 +137,9 @@ void update_ath20(ath20t *d, SSD1306_t *led) {
 	ssd1306_UpdateScreen(led);
 }
 #endif
-#define ADV_VREF_PREAMP (4096 * 1210)
+#define ADV_VREF_PREAMP (4096 * 1200)
 
-void init_adc(ADC_HandleTypeDef *d, SSD1306_t *led) {
+void init_adc(ADC_HandleTypeDef *d) {
 	uint32_t idx, res = 0;
 	ADC_ChannelConfTypeDef sConfig = {0};
 
@@ -149,11 +162,11 @@ void init_adc(ADC_HandleTypeDef *d, SSD1306_t *led) {
 	if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK) { Error_Handler(); }
 }
 
-void update_adc(ADC_HandleTypeDef *d, SSD1306_t *led) {
+void update_adc(ADC_HandleTypeDef *d, lcddev_t *lcd) {
 	char str[64];
 	uint32_t res, idx;
 	//ADC_ChannelConfTypeDef sConfig = {0};
-	init_adc(d, led);
+	init_adc(d);
 	//sConfig.Channel = ADC_CHANNEL_VREFINT;
 	//sConfig.Rank = ADC_REGULAR_RANK_1;
 	//sConfig.SamplingTime = ADC_SAMPLINGTIME_COMMON_1;
@@ -167,10 +180,10 @@ void update_adc(ADC_HandleTypeDef *d, SSD1306_t *led) {
 	//HAL_ADC_Stop(d);
 	//res >>= 2;
 
-	sprintf(str, "chip_vref %ld %d    ", vref, _val_);
-	ssd1306_SetCursor(led, 0, 8);
-	ssd1306_WriteString(led, str, deffont, 1);
-	ssd1306_UpdateScreen(led);
+	//sprintf(str, "chip_vref %ld %d    ", vref, _val_);
+	//fontdraw_setpos(lcd, 0, 8);
+	//fontdraw_string(lcd, str);
+	//lcd->update(lcd);
 
 	//sConfig.Channel = ADC_CHANNEL_TEMPSENSOR;
 	//HAL_ADC_ConfigChannel(&hadc1, &sConfig);
@@ -181,10 +194,10 @@ void update_adc(ADC_HandleTypeDef *d, SSD1306_t *led) {
 	HAL_ADC_Stop(d);
 	idx = __LL_ADC_CALC_TEMPERATURE(vref, res, LL_ADC_RESOLUTION_12B);
 
-	sprintf(str, "chip_temp %ld %ld    ", idx, res);
-	ssd1306_SetCursor(led, 0, 0);
-	ssd1306_WriteString(led, str, deffont, 1);
-	ssd1306_UpdateScreen(led);
+	sprintf(str, "%ld", idx);
+	fontdraw_setpos(lcd, 16, lcd->frameHeight - 8);
+	fontdraw_string(lcd, str);
+	lcd->update(lcd);
 }
 
 void update_devices(SSD1306_t *led) {
@@ -211,43 +224,34 @@ int main(void) {
   swi2c_HWinit(&si2c1, &hi2c1);
   swi2c_HWinit(&si2c2, &hi2c2);
   {
-	  stm32_gpio_t SCL = { SI2C1P, SI2C1L };
-	  stm32_gpio_t SDA = { SI2C1P, SI2C1A };
+	  swgpio_t SCL = { SI2C1P, SI2C1L };
+	  swgpio_t SDA = { SI2C1P, SI2C1A };
 	  swi2c_SWinit(&si2c3, &SCL, &SDA);
   }
   {
-	  stm32_gpio_t SCL = { SI2C2P, SI2C2L };
-	  stm32_gpio_t SDA = { SI2C2P, SI2C2A };
+	  swgpio_t SCL = { SI2C2P, SI2C2L };
+	  swgpio_t SDA = { SI2C2P, SI2C2A };
 	  swi2c_SWinit(&si2c4, &SCL, &SDA);
   }
   swspi_HWinit(&sspi1, &hspi1);
-#ifdef sspi3
-  {
-	  stm32_gpio_t CLK = { SPI3CLKP, SPI3CLK };
-	  stm32_gpio_t MOSI = { SPI3MOP, SPI3MOSI };
-	  swspi_SWinit(&sspi3, &CLK, &MOSI, NULL);
-	  swspi_setbits(&sspi3, 9);
-  }
-#endif
+
   HAL_ADCEx_Calibration_Start(&hadc1);
   HAL_Delay(50);
+  #ifdef LCD1602
   lcd_init(&LCD1601, &si2c1, 0);
   lcd_init(&LCD1602, &si2c2, 0);
   lcd_init(&LCD1603, &si2c3, 0);
   lcd_init(&LCD1604, &si2c4, 0);
+  #endif
+  #ifdef LCD_SSD1306
   {
-	  stm32_gpio_t CS = { LCD_CS_P, LCD_CS };
+	  swgpio_t CD = { LCD_CD_P, LCD_CD };
 	  //stm32_gpio_t RS = { LCD_RSP, LCD_RS };
-	  SSD1306_gpioinit3W2(&SD13061, &CS);
-	  SSD1306_Init(&SD13061, &sspi1);
+	  SSD1306_gpioinit4W2(&gt_lcd, NULL, &CD);
+	  SSD1306_init(&gt_lcd, &sspi1, &deffont);
+	  gp_lcd = &gt_lcd.d;
   }
-#ifdef SD13062
-  {
-	  stm32_gpio_t SS = { SPI3SSP, SPI3SS };
-	  SSD1306_gpioinit3W2(&SD13062, &SS);
-	  SSD1306_Init(&SD13062, &sspi3);
-  }
-#endif
+  #endif
   //ina3221_begin(&ina3221, &si2c4);
   //IP2365_init(&IP23651, &si2c3);
   //IP2365_init(&IP23652, &si2c4);
@@ -256,7 +260,7 @@ int main(void) {
   //sw35xx_init(&SW35182, &si2c3);
   //sw35xx_init(&SW35182, &si2c4);
   //ath20_init(&ath20, &si2c3);
-#if 1
+#if LCD1602
   {
 	  char str[64];
 
@@ -303,8 +307,9 @@ int main(void) {
 	  lcd_send_string(&si2c3, str);
   }
 #endif
-  init_adc(&hadc1, &SD13061);
-  update_devices(&SD13061);
+  init_adc(&hadc1);
+  //update_devices(&SD13061);
+  if(gp_lcd) gp_lcd->update(gp_lcd);
   _val_ = 0;
   while (1) {
 	  //update_ina3221(&ina3221, &SD13061);
@@ -313,9 +318,11 @@ int main(void) {
 	  if(env_key2 > 0) { _val_--; env_key2--; }
 	  if(env_key3 > 0) { _val_=0; env_key3--; }
 	  //update_ath20(&ath20, &SD13061);
-	  update_adc(&hadc1, &SD13061);
+	  update_adc(&hadc1, gp_lcd);
+	  #ifdef LCD1602
 	  lcd_set_backlight_on(&LCD1601, 1); lcd_set_backlight_on(&LCD1602, 1);
 	  lcd_set_backlight_on(&LCD1603, 1); lcd_set_backlight_on(&LCD1604, 1);
+	  #endif
 	  //HAL_GPIO_WritePin(EVB_LED_P, EVB_LED, GPIO_PIN_SET);
 	  HAL_Delay(500);
 	  //update_ina3221(&ina3221, &SD13061);
@@ -324,9 +331,11 @@ int main(void) {
 	  if(env_key2 > 0) { _val_--; env_key2--; }
 	  if(env_key3 > 0) { _val_=0; env_key3--; }
 	  //update_ath20(&ath20, &SD13061);
-	  update_adc(&hadc1, &SD13061);
+	  update_adc(&hadc1, gp_lcd);
+	  #ifdef LCD1602
 	  lcd_set_backlight_on(&LCD1601, 0); lcd_set_backlight_on(&LCD1602, 0);
 	  lcd_set_backlight_on(&LCD1603, 0); lcd_set_backlight_on(&LCD1604, 0);
+	  #endif
 	  //HAL_GPIO_WritePin(EVB_LED_P, EVB_LED, GPIO_PIN_RESET);
 	  HAL_Delay(500);
   }

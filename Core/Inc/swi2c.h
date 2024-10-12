@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <gpiodef.h>
 
-typedef stm32_gpio_t i2c_gpio_t;
+//typedef stm32_gpio_t swgpio_t;
 #define SWI2C_DELAY_TIME    10 // 10us 100kHz
 
 #define I2C_READ            0x01
@@ -47,14 +47,14 @@ typedef struct hwi2c_stm32 {
 typedef struct tag_swi2c {
     int (*hal_init)(struct tag_swi2c*);
     int (*hal_io_ctl)(hal_io_opt_e opt, void *arg);
-	i2c_gpio_t	SDA;
-	i2c_gpio_t	SCL;
+	swgpio_t	SDA;
+	swgpio_t	SCL;
 } swi2c_t;
 
 
 /* functions */
 //void swi2c_initial(swi2c_t *d);
-void swi2c_SWinit(swi2c_t *d, i2c_gpio_t *CLK, i2c_gpio_t *DATA);
+void swi2c_SWinit(swi2c_t *d, swgpio_t *CLK, swgpio_t *DATA);
 void swi2c_HWinit(swi2c_t *d, void *hWND);
 
 uint8_t swi2c_Read_0addr(swi2c_t *d, uint8_t IICID, uint8_t *pdata, uint8_t rcnt);
@@ -67,6 +67,6 @@ uint8_t swi2c_Check_SlaveAddr(swi2c_t *d, uint8_t IICID);
 void swi2c_delay_us(uint32_t time);
 void swi2c_delay_ms(uint32_t time);
 void swi2c_dummy_clock(swi2c_t *d);
-void swi2c_setgpo(swi2c_t *d, i2c_gpio_t *gpiogrp, uint8_t val);
-uint8_t swi2c_getgpi(swi2c_t *d, i2c_gpio_t *gpiogrp);
+void swi2c_setgpo(swi2c_t *d, swgpio_t *gpiogrp, uint8_t val);
+uint8_t swi2c_getgpi(swi2c_t *d, swgpio_t *gpiogrp);
 #endif  /* __I2C_SW_H */

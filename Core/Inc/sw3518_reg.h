@@ -18,10 +18,11 @@ typedef union { //0x01
 } reg_ic_version;
 
 typedef union { //0x06
-	struct {
-	uint8_t fcx_ind : 4;
-	uint8_t pd_src_spec_ver : 2;
-	uint8_t unused : 2;
+	struct { //x mean resvered, no-define.
+	uint8_t fcx_ind : 4; //x-QC2-QC3-FCP-SCP-PDfix-PDpps-PE1-PE2-LVDC-SFCP-AFC-x
+	uint8_t pd_src_spec_ver : 2; //x-PD2.0-PD3.0-x
+	uint8_t unused : 1;
+	uint8_t led_fastcharge : 1;
 	} __attribute__((packed));
 	uint8_t reg_fcx_status;
 } reg_fcx_status;
@@ -39,9 +40,9 @@ typedef union { //0x07
 typedef union { //0x12
 	struct {
 	uint8_t unused1 : 5;
-	uint8_t i2c_pre_enable1 : 1;
+	uint8_t i2c_pre_enable1 : 1; //write 0x20->0x40->0x80
 	uint8_t i2c_pre_enable2 : 1;
-	uint8_t i2c_pre_enable : 1;
+	uint8_t i2c_pre_enable : 1; //reg b0-bf writeable
 	} __attribute__((packed));
 	uint8_t reg_i2c_enable;
 } reg_i2c_enable;
@@ -172,15 +173,71 @@ typedef union { //0xaa
 
 typedef union { //0xaf
 	struct {
-	uint8_t	vid_h : 8; //PD certification VID, determined by OTP
+	uint8_t	vid : 8; //PD certification VID, determined by OTP
 	} __attribute__((packed));
 	uint8_t reg_vid_conf0;
 } reg_vid_conf0;
 
 typedef union { //0xb0
 	struct {
-	uint8_t pd_src_3p0_enable : 1;
-	uint8_t pd_src_emk_enable : 1;
+	uint8_t pd_src_cur_f05v : 7; //50mA step
+	uint8_t pd_src_cur_f05v_enable : 1;
+	} __attribute__((packed));
+	uint8_t reg_pd_conf1;
+} reg_pd_conf1;
+
+typedef union { //0xb1
+	struct {
+	uint8_t pd_src_cur_f09v : 7; //50mA step
+	uint8_t pd_src_cur_f09v_enable : 1;
+	} __attribute__((packed));
+	uint8_t reg_pd_conf2;
+} reg_pd_conf2;
+
+typedef union { //0xb2
+	struct {
+	uint8_t pd_src_cur_f12v : 7; //50mA step
+	uint8_t pd_src_cur_f12v_enable : 1;
+	} __attribute__((packed));
+	uint8_t reg_pd_conf3;
+} reg_pd_conf3;
+
+typedef union { //0xb3
+	struct {
+	uint8_t pd_src_cur_f15v : 7; //50mA step
+	uint8_t pd_src_cur_f15v_enable : 1;
+	} __attribute__((packed));
+	uint8_t reg_pd_conf4;
+} reg_pd_conf4;
+
+typedef union { //0xb4
+	struct {
+	uint8_t pd_src_cur_f20v : 7; //50mA step
+	uint8_t pd_src_cur_f20v_enable : 1;
+	} __attribute__((packed));
+	uint8_t reg_pd_conf5;
+} reg_pd_conf5;
+
+typedef union { //0xb5
+	struct {
+	uint8_t pd_src_cur_pps0 : 7; //50mA step
+	uint8_t pd_src_cur_pps0_enable : 1;
+	} __attribute__((packed));
+	uint8_t reg_pd_conf6;
+} reg_pd_conf6;
+
+typedef union { //0xb6
+	struct {
+	uint8_t pd_src_cur_pps1 : 7; //50mA step
+	uint8_t pd_src_cur_pps1_enable : 1;
+	} __attribute__((packed));
+	uint8_t reg_pd_conf7;
+} reg_pd_conf7;
+
+typedef union { //0xb7
+	struct {
+	uint8_t pd_src_3p0_enable : 1; // 0:PD 2.0, 1:PD 3.0
+	uint8_t pd_src_emk_enable : 1; // emark 0:disable 1:enable
 	uint8_t pd_src_f09v_enable : 1;
 	uint8_t pd_src_f12v_enable : 1;
 	uint8_t pd_src_f15v_enable : 1;
@@ -188,8 +245,62 @@ typedef union { //0xb0
 	uint8_t pd_src_pps0_enable : 1;
 	uint8_t pd_src_pps1_enable : 1;
 	} __attribute__((packed));
-	uint8_t reg_pro_conf;
-} reg_pro_conf;
+	uint8_t reg_pd_conf8;
+} reg_pd_conf8;
 
+typedef union { //0xb8
+	struct {
+	uint8_t pd_src_euv_cur_enable : 2; //don't compare maximum output current
+	uint8_t dontouch : 2;
+	uint8_t pd_src_65w_325_enable : 1; //no check emark when output 61-70w
+	uint8_t pd_src_5v2a_enable : 1;
+	uint8_t unused : 2;
+	} __attribute__((packed));
+	uint8_t reg_pd_conf9;
+} reg_pd_conf9;
+
+typedef union { //0xb9
+	struct {
+	uint8_t pe_src_enable : 1;
+	uint8_t dontouch : 1;
+	uint8_t scp_src_enable : 1;
+	uint8_t fcp_src_enable : 1;
+	uint8_t qc_src_enable : 1;
+	uint8_t pd_src_enable : 1;
+	uint8_t port1_src_fastcharge : 1;
+	uint8_t port0_src_fastcharge : 1;
+	} __attribute__((packed));
+	uint8_t reg_qc_conf1;
+} reg_qc_conf1;
+
+typedef union { //0xba
+	struct {
+	uint8_t dontouch1 : 2;
+	uint8_t pwr_class : 2;//limit maximum output voltage except PD,9-12-20-20
+	uint8_t dontouch2 : 2;
+	uint8_t afc_src_enable : 1;
+	uint8_t sfcp_src_enable : 1;
+	} __attribute__((packed));
+	uint8_t reg_qc_conf2;
+} reg_qc_conf2;
+
+typedef union { //0xba
+	struct {
+	uint8_t ps_src_vol_pps0 : 2; //5.9v,11v,16v,21v
+	uint8_t ps_src_lim_pps0 : 1; //pps0 power limit
+	uint8_t ps_src_vol_pps0 : 1; //pps0 maximum voltage enable, ref from bit0:1
+	uint8_t ps_src_vol_pps1 : 2; //5.9v,11v,16v,21v
+	uint8_t ps_src_lim_pps1 : 1; //pps1 power limit
+	uint8_t ps_src_vol_pps1 : 1; //pps1 maximum voltage enable, ref from bit4:5
+	} __attribute__((packed));
+	uint8_t reg_pd_conf10;
+} reg_pd_conf10;
+
+typedef union { //0xbf
+	struct {
+	uint8_t	vid : 8; //PD certification VID, determined by OTP
+	} __attribute__((packed));
+	uint8_t reg_vid_conf1;
+} reg_vid_conf1;
 
 #endif /* INC_SW3518_REG_H_ */
